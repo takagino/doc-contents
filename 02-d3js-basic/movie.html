@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2024年映画興行収入ランキング</title>
+    <style>
+      #chart svg {
+        width: 100%;
+        height: auto;
+        background-color: #eee;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>2024年映画興行収入ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: '名探偵コナン 100万ドルの五稜星（みちしるべ）',
+          value: 158,
+          url: 'https://pixiin.com/img/1299-s2.jpg',
+        },
+        { label: '劇場版ハイキュー!! ゴミ捨て場の決戦', value: 116 },
+        { label: 'キングダム 大将軍の帰還', value: 80 },
+        { label: 'はたらく細胞', value: 63 },
+        { label: 'ラストマイル', value: 59 },
+        { label: '機動戦士ガンダムSEED FREEDOM', value: 53 },
+        { label: 'インサイド・ヘッド2', value: 53 },
+        { label: 'モアナと伝説の海21', value: 51 },
+        { label: '変な家', value: 50 },
+        { label: '怪盗グルーのミニオン超変身', value: 45 },
+      ];
+
+      // X軸のスケール（数値を幅に変換）
+      const xScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(dataset, (d) => d.value)]) // 0からデータの最大値まで
+        .range([0, 500 - 100]); // 幅を500pxからラベル分引いた値まで
+
+      const svg = d3
+        .select('#chart')
+        .append('svg')
+        .attr('viewBox', '0 0 500 300');
+
+      svg
+        .selectAll('rect')
+        .data(dataset)
+        .join('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30 + 10)
+        .attr('width', (d) => xScale(d.value)) // スケールを適用
+        .attr('height', 10)
+        .attr('fill', '#ffff00');
+
+      svg
+        .selectAll('.label')
+        .data(dataset)
+        .join('text')
+        .classed('label', true)
+        .attr('font-size', '10')
+        .attr('x', (d) => 0)
+        .attr('y', (d, i) => i * 30 + 10)
+        .text((d) => d.label);
+
+      svg
+        .selectAll('.value')
+        .data(dataset)
+        .join('text')
+        .classed('value', true)
+        .attr('font-size', '8')
+        .attr('x', (d) => xScale(d.value)) // スケールを適用
+        .attr('y', (d, i) => i * 30 + 20)
+        .text((d) => d.value);
+    </script>
+  </body>
+</html>

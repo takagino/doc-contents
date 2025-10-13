@@ -1,16 +1,51 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>D3.js Test</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-</head>
-<body>
-  <h1>D3.js Test Page</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3.js Test</title>
+    <style>
+      #chart svg {
+        width: 100%;
+        height: auto;
+        background-color: #eee;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <div id="chart"></div>
 
-  <script>
+    <script>
+      const dataset = [
+        { label: 'A', color: '#f00', value: 40 },
+        { label: 'B', color: '#0f0', value: 85 },
+        { label: 'C', color: '#00f', value: 60 },
+        { label: 'D', color: '#0ff', value: 25 },
+      ];
 
-  </script>
-</body>
+      const svg = d3
+        .select('#chart') // id="chart"のdiv要素を選択
+        .append('svg') // 中にsvg要素を追加
+        .attr('viewBox', '0 0 500 300'); // SVGの内部座標とレスポンシブ設定
+
+      svg
+        .selectAll('rect')
+        .data(dataset)
+        .join('rect')
+        .attr('x', (d, i) => i * 40)
+        .attr('y', (d) => 300 - d.value)
+        .attr('width', 30)
+        .attr('height', (d) => d.value)
+        .attr('fill', (d) => d.color);
+
+      svg
+        .selectAll('text')
+        .data(dataset)
+        .join('text')
+        .attr('x', (d, i) => i * 40)
+        .attr('y', (d) => 300 - d.value - 5)
+        .text((d) => d.value);
+    </script>
+  </body>
 </html>
