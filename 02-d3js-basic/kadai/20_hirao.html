@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eveの再生回数ランキング</title>
+    <style>
+        body {
+            background-color: rgb(108, 108, 108);
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <h1>Eveの再生回数ランキング</h1>
+    <div id="chart"></div>
+</body>
+<script>
+    const dataset = [
+        {
+            label: '廻廻奇譚',
+            value: 4.3,
+            url: 'https://pixiin.com/img/1299-s2.jpg',
+            color: '#ffff00'
+        },
+        {
+            label: 'ドラマツルギー',
+            value: 2,
+            url: 'https://pixiin.com/img/1235-s2.jpg',
+            color: '#ff0000'
+        },
+        {
+            label: 'お気に召すまま',
+            value: 1.4,
+            url: 'https://pixiin.com/img/1307-s2.jpg',
+            color: '#00ff00'
+        },
+        {
+            label: 'いのちの食べ方',
+            value: 1.1,
+            url: 'https://pixiin.com/img/2896-s2.jpg',
+            color: '#0000ff'
+        },
+        {
+            label: 'あの娘シークレット',
+            value: 0.8,
+            url: 'https://pixiin.com/img/2819-s2.jpg',
+            color: '#00ffff'
+        }]
+    const xScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(dataset, (d) => d.value)]) // 0からデータの最大値まで　どこからどこまでのデータを？配列のかたちで記入する
+        .range([0, 80]); // 幅を500pxからラベル分引いた値まで
+
+
+    const svg = d3.select("#chart") // id="chart"のdiv要素を選択
+        .append("svg") // 中にsvg要素を追加
+        .attr("viewBox", "0 0 500 300"); // SVGの内部座標とレスポンシブ設定
+
+    svg
+        .selectAll('circle')
+        .data(dataset)
+        .join('circle')
+        .attr('cx', (d, i) => i + Math.random() * 500 + xScale(d.value))
+        .attr('cy', (d, i) => i + Math.random() * 300)
+        .attr('r', (d) => xScale(d.value))
+        .attr('fill', (d) => d.color)
+        .style("opacity", 0.8);
+
+    svg
+        .selectAll('.label')
+        .data(dataset)
+        .join('text')
+        .classed('label', true)
+        .attr('font-size', '10')
+        .attr('x', (d) => 40)
+        .attr('y', (d, i) => i * 30 + 10)
+        .text((d, i) => `${i + 1}位:${d.label}`)
+        .attr('fill', (d) => d.color)
+</script>
+
+</html>

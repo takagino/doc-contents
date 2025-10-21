@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2024年映画興行収入ランキング</title>
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d6d6d6;
+            color: #333;
+        }
+
+        h1{
+            margin:0 30px;
+        }
+
+        #chart svg {
+            margin:0 30px;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <h1>米津玄師youtube再生回数ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+    // 画像のURLを追加
+    const dataset = [
+        {
+            label: 'Lemon',
+            value:9.4,
+            url: 'https://i.ytimg.com/vi/SX_ViT4Ra7k/maxresdefault.jpg',
+        },
+        {
+            label: 'アイネクライネ',
+            value: 3.6,
+            url: 'https://i.ytimg.com/vi/-EKxzId_Sj4/sddefault.jpg',
+        },
+        {
+            label: 'LOSER',
+            value: 3.5,
+            url: 'https://i.ytimg.com/vi/Dx_fKPBPYUI/maxresdefault.jpg',
+        },
+        {
+            label: 'ピースサイン',
+            value: 3.2,
+            url: 'https://i.ytimg.com/vi/9aJVr5tTTWk/maxresdefault.jpg',
+        },
+        {
+            label: '灰色と青',
+            value: 2.7,
+            url: 'https://i.ytimg.com/vi/gJX2iy6nhHc/maxresdefault.jpg',
+        },
+        {
+            label: '感電',
+            value: 2.4,
+            url: 'https://highsnobiety.jp/wp-content/uploads/2020/10/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88-2020-10-29-19.16.32.jpg',
+        },
+        {
+            label: '馬と鹿',
+            value: 2.1,
+            url: 'https://i.ytimg.com/vi/ptnYBctoexk/maxresdefault.jpg',
+        },
+        {
+            label: 'KICK BACK',
+            value: 2,
+            url: 'https://skream.jp/news/assets_c/2022/12/yonezu_kenshi_kb_mv-thumb-1200xauto-177667.jpg',
+        },
+        {
+            label: 'orion',
+            value: 1.9,
+            url: 'https://i.ytimg.com/vi/lzAyrgSqeeE/maxresdefault.jpg',
+        },
+        {
+            label: 'IRIS OUT',
+            value: 0.5,
+            url: 'https://i.ytimg.com/vi/LmZD-TU96q4/sddefault.jpg?v=68c6db56',
+        },
+    ];
+
+    const svg = d3
+        .select('#chart')
+        .append('svg')
+        .attr('viewBox', '0 0 500 300');
+
+    svg.selectAll('.background')
+        .data(dataset)
+        .join('rect')
+        .classed('background', true)
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30 -3)
+        .attr('width', (d) => d.value*30 + 180)
+        .attr('height', 25)
+        .attr('fill', '#fff');
+
+
+    svg
+        .selectAll('image')
+        .data(dataset)
+        .join('image')
+        .attr('href', (d) => d.url)
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30)
+        .attr('width', 30);
+
+    svg
+        .selectAll('.bar')
+        .data(dataset)
+        .join('rect')
+        .attr('x', 40)
+        .attr('y', (d, i) => i * 30 + 10)
+        .attr('width', (d) => d.value*30+100)
+        .attr('height', 10)
+        .attr('fill', '#d9d56f');
+
+    svg
+        .selectAll('.label')
+        .data(dataset)
+        .join('text')
+        .classed('label', true)
+        .attr('font-size', '10')
+        .attr('x', (d) => 40)
+        .attr('y', (d, i) => i * 30 + 8)
+        .text((d,i) => `${i + 1}位：${d.label}`);
+
+    svg
+        .selectAll('.value')
+        .data(dataset)
+        .join('text')
+        .classed('value', true)
+        .attr('font-size', '8')
+        .attr('x', (d) => 80)
+        .attr('y', (d, i) => i * 30 + 18)
+        .text((d) => `${d.value}億回`);
+    </script>
+</body>
+
+</html>

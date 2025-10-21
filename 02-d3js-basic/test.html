@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3.js Test</title>
+  <style>
+    #chart svg {
+      width: 100%;
+      height: auto;
+      background-color: #eee;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="chart">
+  </div>
+
+  <script>
+    // 可視化するデータ
+    const dataset = [
+      { label: "A", color: "#f00", value: 40 },
+      { label: "B", color: "#0f0", value: 85 },
+      { label: "C", color: "#00f", value: 60 },
+      { label: "D", color: "#ff0", value: 25 },
+    ];
+
+    const svg = d3
+      .select("#chart")
+      .append("svg")
+      .attr("viewBox", "0 0 500 300");
+
+    svg
+      .selectAll('rect')
+      .data(dataset)
+      .join('rect')
+      .attr('x', (d, i) => i * 40)
+      .attr('y', (d) => 300 - d.value)
+      .attr('width', 30)
+      .attr('height', (d) => d.value)
+      .attr('fill', (d) => d.color);
+
+    svg
+      .selectAll('text')
+      .data(dataset)
+      .join('text')
+      .attr('x', (d, i) => i * 40)
+      .attr('y', (d) => 300 - d.value)
+      .text((d) => d.value);
+
+    svg
+      .selectAll('circle')
+      .data(dataset)
+      .join('circle')
+      .attr('cx', (d, i) => i * 100)
+      .attr('cy', 150)
+      .attr('r', (d) => d.value)
+      .attr('fill', (d) => d.color);
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3.js Test</title>
+    <style>
+      #chart svg {
+        width: 100%;
+        height: auto;
+        background-color: #eee;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <button id="btn24" data-key="val24">2024</button>
+    <button id="btn25" data-key="val25">2025</button>
+    <div id="chart"></div>
+
+    <script>
+      d3.json('./data.json')
+        .then((dataset) => {
+          // 読み込み成功時の処理
+
+          const maxValue = d3.max(dataset, (data) =>
+            Math.max(data.val24, data.val25)
+          );
+          const xScale = d3
+            .scaleLinear()
+            .domain([0, maxValue])
+            .range([0, 500 - 100]);
+
+          const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 500 300');
+
+          const g = svg
+            .selectAll('.item')
+            .data(dataset)
+            .join('g')
+            .classed('item', true)
+            .attr('transform', (d, i) => `translate(0, ${i * 30})`);
+
+          const rect = g
+            .append('rect')
+            .attr('x', 0)
+            .attr('width', 0)
+            .attr('height', 20)
+            .attr('fill', (d) => d.color);
+
+          g.append('text')
+            .classed('label', true)
+            .attr('font-size', '14')
+            .attr('x', (d) => xScale(d.val24))
+            .attr('y', 14)
+            .text((d) => d.label);
+
+          g.append('text')
+            .classed('value', true)
+            .attr('font-size', '14')
+            .attr('x', 0)
+            .attr('y', 14)
+            .text((d) => d.val24);
+
+          const updateValues = (key) => {
+            rect
+              .transition()
+              .duration(1000)
+              .delay(500)
+              .ease(d3.easeLinear)
+              .attr('width', (d) => xScale(d[key]));
+          };
+
+          const btn = document.querySelectorAll('button');
+          btn.forEach((elem) => {
+            elem.addEventListener('click', () => {
+              updateValues(elem.dataset.key);
+            });
+          });
+        })
+        .catch((error) => {
+          console.error('データの読み込みに失敗しました:', error);
+        });
+    </script>
+  </body>
+</html>

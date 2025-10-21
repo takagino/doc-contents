@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>寿司ネタ人気ランキング</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            /* background-color: #f9f9f9; */
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #chart svg {
+            width: 80%;
+            height: auto;
+            margin-right: auto;
+            background-color: #f2f2f2;
+            padding: 30px;
+        }
+
+        .bg_pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #fff;
+            z-index: -1;
+        }
+
+        .Paper_v2 {
+            background-image:
+                repeating-linear-gradient(to bottom,
+                    transparent 25px,
+                    rgba(0, 0, 0, 0.04) 26px, rgba(0, 0, 0, 0.04) 26px,
+                    transparent 27px, transparent 51px,
+                    rgba(0, 0, 0, 0.04) 52px, rgba(0, 0, 0, 0.04) 52px,
+                    transparent 53px, transparent 77px,
+                    rgba(0, 0, 0, 0.04) 78px, rgba(0, 0, 0, 0.04) 78px,
+                    transparent 79px, transparent 103px,
+                    rgba(0, 0, 0, 0.04) 104px, rgba(0, 0, 0, 0.04) 104px,
+                    transparent 105px, transparent 129px,
+                    rgba(0, 0, 0, 0.04) 130px, rgba(0, 0, 0, 0.04) 130px),
+
+                repeating-linear-gradient(to right,
+                    transparent 25px,
+                    rgba(0, 0, 0, 0.04) 26px, rgba(0, 0, 0, 0.04) 26px,
+                    transparent 27px, transparent 51px,
+                    rgba(0, 0, 0, 0.04) 52px, rgba(0, 0, 0, 0.04) 52px,
+                    transparent 53px, transparent 77px,
+                    rgba(0, 0, 0, 0.04) 78px, rgba(0, 0, 0, 0.04) 78px,
+                    transparent 79px, transparent 103px,
+                    rgba(0, 0, 0, 0.04) 104px, rgba(0, 0, 0, 0.04) 104px,
+                    transparent 105px, transparent 129px,
+                    rgba(0, 0, 0, 0.04) 130px, rgba(0, 0, 0, 0.04) 130px);
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <div class="bg_pattern Paper_v2"></div>
+    <h1>寿司チェーン店舗数ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+        // 画像のURLを追加
+
+        const dataset = [
+            { label: 'スシロー', value: 644, color: '#bf350f' },
+            { label: 'はま寿司', value: 609, color: '#466c9e' },
+            { label: 'くら寿司', value: 551, color: '#007a18' },
+            { label: '銀のさら', value: 374, color: '#969696' },
+            { label: '丼丸', value: 325, color: '#ffc72e' },
+            { label: 'かっぱ寿司', value: 288, color: '#54d43d' },
+            { label: '魚べい', value: 174, color: '#803d0f' },
+            { label: 'ちよだ鮨', value: 167, color: '#7e57a1' },
+            { label: '小僧寿し', value: 146, color: '#ad1d91' },
+            { label: 'すし銚子丸', value: 82, color: '#0a95bf' }
+        ];
+
+        const xScale = d3
+            .scaleLinear()
+            .domain([0, d3.max(dataset, (d) => d.value)])
+            .range([0, 500 - 100]);
+
+        const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 500 500');
+
+        // svg
+        //     .selectAll('image')
+        //     .data(dataset)
+        //     .join('image')
+        //     .attr('href', (d) => d.url)
+        //     .attr('x', 0)
+        //     .attr('y', (d, i) => i * 30)
+        //     .attr('width', 30);
+
+        svg
+            .selectAll('rect')
+            .data(dataset)
+            .join('rect')
+            .attr('x', 0)
+            .attr('y', (d, i) => i * 50 + 15)
+
+            .attr('rx', 10)
+            // .attr('width', (d) => xScale(d.value))
+            // .attr('height', 20)
+            // .attr('fill', (d) => d.color);
+            .attr('width', 0)
+            .attr('height', 20)
+            .attr('fill', (d) => d.color)
+            .transition()
+            .duration(1000)
+            .delay((d, i) => i * 100)
+            .attr('width', (d) => xScale(d.value));
+
+
+        svg
+            .selectAll('.label')
+            .data(dataset)
+            .join('text')
+            .classed('label', true)
+            .attr('font-size', '10')
+            .attr('x', 0)
+            .attr('y', (d, i) => i * 50 + 10)
+            .text((d, i) => `${i + 1}位：${d.label}`); // 順位を追加
+
+        svg
+            .selectAll('.value')
+            .data(dataset)
+            .join('text')
+            .classed('value', true)
+            .attr('font-size', '8')
+            .attr('x', (d) => xScale(d.value) + 10)
+            .attr('y', (d, i) => i * 50 + 30)
+            .text((d) => `${d.value}軒`); // 単位を追加
+
+    </script>
+</body>
+
+</html>

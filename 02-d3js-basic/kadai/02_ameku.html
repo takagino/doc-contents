@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>都道府県魅力度ランキング</title>
+    <style>
+      #chart svg {
+        width: 100%;
+        height: auto;
+        padding-top: 20px;
+        background-color: #cbf1ebd8;
+      }
+
+      h1 {
+        color: #1a63ffd8;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>都道府県魅力度ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: "北海道",
+          value: 71,
+          url: "https://hoshinoresorts.com/jp/guide/wp-content/uploads/2018/12/hs00.jpg",
+        },
+        {
+          label: "京都府",
+          value: 53,
+          url: "https://goopass-travel-image-prd.s3.ap-northeast-1.amazonaws.com/travel/wp-content/uploads/2022/05/23639540_m-1024x683.jpg",
+        },
+        {
+          label: "沖縄県",
+          value: 49,
+          url: "https://travel.rakuten.co.jp/mytrip/sites/mytrip/files/migration_article_images/amazing/amazingviews-okinawa-12_01.jpg",
+        },
+        {
+          label: "神奈川県",
+          value: 43,
+          url: "https://www.housing-messe.com/yell/live-rary/wp-content/uploads/sites/2/2021/09/shutterstock_725708299-1.jpg",
+        },
+        {
+          label: "東京都",
+          value: 42,
+          url: "https://tabizine.jp/wp-content/uploads/2018/05/184838-03.jpg",
+        },
+        {
+          label: "福岡県",
+          value: 39,
+          url: "https://d2yuneokf1xzk4.cloudfront.net/nap-camp-files/wp-uploads/mag/2024/11/pixta_96239278_S.jpg",
+        },
+      ];
+
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("viewBox", "0 0 500 500");
+
+      svg
+        .selectAll("image")
+        .data(dataset)
+        .join("image")
+        .attr("href", (d) => d.url)
+        .attr("x", 0)
+        .attr("y", (d, i) => i * 80)
+        .attr("width", 100);
+
+      svg
+        .selectAll("rect")
+        .data(dataset)
+        .join("rect")
+        .attr("x", 110)
+        .attr("y", (d, i) => i * 80 + 14)
+        .attr("width", (d) => d.value)
+        .attr("height", 10)
+        .attr("fill", "#12dcbed8");
+
+      svg
+        .selectAll(".label")
+        .data(dataset)
+        .join("text")
+        .classed("label", true)
+        .attr("font-size", "12")
+        .attr("x", (d) => 110)
+        .attr("y", (d, i) => i * 80 + 10)
+        .text((d) => d.label);
+
+      svg
+        .selectAll(".value")
+        .data(dataset)
+        .join("text")
+        .classed("value", true)
+        .attr("font-size", "12")
+        .attr("x", (d) => d.value + 112)
+        .attr("y", (d, i) => i * 80 + 24)
+        .text((d) => d.value);
+    </script>
+  </body>
+</html>

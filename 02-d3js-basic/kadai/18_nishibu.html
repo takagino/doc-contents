@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2025年 好きな都道府県ランキング</title>
+    <style>
+      body {
+        font-family: "Arial", "メイリオ", sans-serif;
+        background-color: #f9f9f9;
+        text-align: center;
+      }
+
+      h1 {
+        color: #444;
+        margin-top: 20px;
+      }
+
+      #chart svg {
+        width: 90%;
+        max-width: 700px;
+        height: auto;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        display: block;
+      }
+
+      text {
+        font-size: 12px;
+        fill: #333;
+      }
+
+      .pref-name {
+        font-weight: bold;
+      }
+
+      .score {
+        fill: #555;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>🏖️ 2025年 好きな都道府県ランキング TOP10</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        { prefecture: "北海道", score: 95 },
+        { prefecture: "沖縄県", score: 92 },
+        { prefecture: "京都府", score: 90 },
+        { prefecture: "東京都", score: 87 },
+        { prefecture: "大阪府", score: 85 },
+        { prefecture: "福岡県", score: 83 },
+        { prefecture: "神奈川県", score: 80 },
+        { prefecture: "長野県", score: 78 },
+        { prefecture: "静岡県", score: 75 },
+        { prefecture: "愛知県", score: 73 }
+      ];
+
+
+      const width = 500;
+      const height = 400;
+      const margin = { top: 20, right: 80, bottom: 20, left: 130 };
+
+      const xScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(dataset, (d) => d.score)])
+        .range([0, width - margin.left - margin.right]);
+
+      const yScale = d3
+        .scaleBand()
+        .domain(dataset.map((d) => d.prefecture))
+        .range([0, height - margin.top - margin.bottom])
+        .padding(0.2);
+
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`);
+
+      const chart = svg
+        .append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+
+      chart
+        .selectAll("rect")
+        .data(dataset)
+        .join("rect")
+        .attr("x", 0)
+        .attr("y", (d) => yScale(d.prefecture))
+        .attr("width", (d) => xScale(d.score))
+        .attr("height", yScale.bandwidth())
+        .attr("fill", "#90caf9");
+
+
+      chart
+        .selectAll(".pref-name")
+        .data(dataset)
+        .join("text")
+        .attr("class", "pref-name")
+        .attr("x", -10)
+        .attr("y", (d) => yScale(d.prefecture) + yScale.bandwidth() / 1.5)
+        .attr("text-anchor", "end")
+        .text((d, i) => `${i + 1}位 ${d.prefecture}`);
+
+
+      chart
+        .selectAll(".score")
+        .data(dataset)
+        .join("text")
+        .attr("class", "score")
+        .attr("x", (d) => xScale(d.score) + 10)
+        .attr("y", (d) => yScale(d.prefecture) + yScale.bandwidth() / 1.5)
+        .text((d) => `${d.score} ％`);
+    </script>
+  </body>
+</html>

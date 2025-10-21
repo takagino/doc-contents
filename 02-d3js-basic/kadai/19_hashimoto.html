@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ニンテンドースイッチソフト売上ランキング</title>
+  <style>
+    #chart svg {
+      width: 100%;
+      height: auto;
+      background-color: #eee;
+      font-size: 12px;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+  <h1>ニンテンドースイッチソフト売上ランキング</h1>
+  <div id="chart"></div>
+
+  <script>
+    const dataset = [
+      { label: 'マリオカート8デラックス', value: 6197 },
+      { label: 'あつまれ どうぶつの森', value: 4536 },
+      { label: '大乱闘スマッシュブラザーズ SPECIAL', value: 3422 },
+      { label: 'ゼルダの伝説 ブレス オブ ザ ワイルド', value: 3185 },
+      { label: 'スーパーマリオ オデッセイ', value: 2796 },
+      { label: 'ポケットモンスター ソード・シールド', value: 2627 },
+      { label: 'ポケットモンスター スカーレット・バイオレット', value: 2492 },
+      { label: 'スーパーマリオパーティ', value: 2066 },
+      { label: 'ゼルダの伝説 ティアーズ オブ キングダム', value: 2061 },
+      { label: 'New スーパーマリオブラザーズ U デラックス', value: 1745 },
+
+    ];
+
+    dataset.sort((a, b) => b.value - a.value);
+
+    const itemHeight = 40;
+
+    const svg = d3
+      .select('#chart')
+      .append('svg')
+      .attr('viewBox', `0 0 600 ${dataset.length * itemHeight}`);
+
+    svg
+      .selectAll('rect')
+      .data(dataset)
+      .join('rect')
+      .attr('x', 0)
+      .attr('y', (d, i) => i * itemHeight + 16)
+      .attr('width', (d) => d.value * 0.08)
+      .attr('height', 12)
+      .attr('fill', '#ef4444')
+      .attr('rx', 4);
+
+    svg
+      .selectAll('.label')
+      .data(dataset)
+      .join('text')
+      .classed('label', true)
+      .attr('x', 0)
+      .attr('y', (d, i) => i * itemHeight + 12)
+      .text((d) => d.label);
+
+    svg
+      .selectAll('.value')
+      .data(dataset)
+      .join('text')
+      .classed('value', true)
+      .attr('x', (d) => d.value * 0.08 + 5)
+      .attr('y', (d, i) => i * itemHeight + 26)
+      .text((d) => `${d.value.toLocaleString()}万本`);
+  </script>
+</body>
+
+</html>

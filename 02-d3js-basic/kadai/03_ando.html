@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>【BOYS PLANET】最終順位</title>
+    <style>
+      #chart svg {
+        width: 100%;
+        height: auto;
+       background-image: url(https://thumb.photo-ac.com/4a/4ac9b9c7c6190d6e2d32c6ec27a8e768_t.jpeg);
+       background-size: 100%;
+      }
+
+      h1{
+        font-size: 30px;
+         color: #490180;
+      }
+
+      body{
+        font-family: 'Times New Roman', Times, serif;
+
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>【BOYS PLANET】最終順位</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        { label: 'ジャン・ハオ', value: 199 ,url:'https://www.nehannn.com/img/artist/1672/1672-0.jpg'},
+        { label: 'ソン・ハンビン', value: 188 ,url:'https://www.nehannn.com/img/artist/1673/1673-0.jpg'},
+        { label: 'ソク・マシュー', value: 170 ,url:'https://www.nehannn.com/img/artist/1674/1674-s.jpg'
+         },
+        { label: 'リッキー', value: 157 ,url:'https://www.nehannn.com/img/artist/1676/1676-0.jpg'},
+        { label: 'パク・ゴヌク', value: 138 ,url:'https://www.nehannn.com/img/artist/1678/1678-0.jpg'},
+        { label: 'キム・テレ', value: 134 ,url:'https://www.nehannn.com/img/artist/1675/1675-0.jpg'},
+        { label: 'キム・ギュビン', value: 134 ,url:'https://www.nehannn.com/img/artist/1677/1677-0.jpg'},
+        { label: 'キム・ジウン', value: 133 ,url:'https://www.nehannn.com/img/artist/1671/1671-0.jpg'},
+        { label: 'ハン・ユジン', value: 119 ,url:'https://www.nehannn.com/img/artist/1679/1679-0.jpg'},
+      ];
+
+      const svg = d3
+	.select('#chart')
+	.append('svg')
+	.attr('viewBox', '0 0 500 300');
+
+//     const xScale = d3
+// .scaleLinear()
+// .domain([0, 158])
+// .range([0, 500 - 100]);
+
+svg
+  .selectAll('image')
+  .data(dataset)
+  .join('image')
+  .attr('href', (d) => d.url)
+  .attr('x', 0)
+  .attr('y', (d, i) => i * 30)
+  .attr('width', 30);
+
+
+svg
+	.selectAll('rect')
+	.data(dataset)
+	.join('rect')
+	.attr('x', 40)
+	.attr('y', (d, i) => i * 30 + 14)
+	.attr('width', (d) => d.value)
+	.attr('height', 10)
+	.attr('fill', '#a248f7');
+
+svg
+	.selectAll('.label')
+	.data(dataset)
+	.join('text')
+	.classed('label', true)
+	.attr('font-size', '10')
+	.attr('x', (d) => 40)
+	.attr('y', (d, i) => i * 30 + 10)
+	.text((d, i) => `${i + 1}位：${d.label}`)
+    .attr('fill', '#ffffff');
+
+    svg
+	.selectAll('.value')
+	.data(dataset)
+	.join('text')
+	.classed('value', true)
+	.attr('font-size', '8')
+	.attr('x', (d) => d.value + 40)
+	.attr('y', (d, i) => i * 30 + 20)
+	.text((d) => `${d.value}万票`)
+    .attr('fill', '#ffffff');;
+    </script>
+  </body>
+</html>

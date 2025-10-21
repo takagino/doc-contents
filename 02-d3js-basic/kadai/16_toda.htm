@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js 課題</title>
+    <style>
+        #chart svg {
+            width: 100%;
+            height: auto;
+            background: #ddd;
+            margin-bottom: 120px;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+    <h1>日本苗字ランキング</h1>
+    <!-- 参考 -->
+    <!-- https://myoji-yurai.net/prefectureRanking.htm -->
+    <div id="chart"></div>
+
+    <script>
+        const dataset = [
+            {
+                label: '佐藤',
+                value: 1798000,
+                url: 'https://placehold.jp/3d4070/00ffff/50x50.png?text=%E4%BD%90%E8%97%A4',
+            },
+            {
+                label: '鈴木',
+                value: 1745000,
+                url: 'https://placehold.jp/3d4070/00ffff/50x50.png?text=%E9%88%B4%E6%9C%A8',
+            },
+            {
+                label: '高橋',
+                value: 1361000,
+                url: 'https://placehold.jp/3d4070/00ffff/50x50.png?text=%E9%AB%98%E6%A9%8B',
+            },
+            {
+                label: '田中',
+                value: 1293000,
+                url: 'https://placehold.jp/3d4070/ff00ff/50x50.png?text=%E7%94%B0%E4%B8%AD',
+            },
+            {
+                label: '伊藤',
+                value: 1037000,
+                url: 'https://placehold.jp/3d4070/ff00ff/50x50.png?text=%E4%BC%8A%E8%97%A4',
+            },
+            {
+                label: '渡辺',
+                value: 1028000,
+                url: 'https://placehold.jp/3d4070/ff00ff/50x50.png?text=%E6%B8%A1%E8%BE%BA',
+            },
+            {
+                label: '山本',
+                value: 1013000,
+                url: 'https://placehold.jp/3d4070/ffff00/50x50.png?text=%E5%B1%B1%E6%9C%AC',
+            },
+            {
+                label: '中村',
+                value: 1011000,
+                url: 'https://placehold.jp/3d4070/ffff00/50x50.png?text=%E4%B8%AD%E6%9D%91',
+            },
+            {
+                label: '小林',
+                value: 996000,
+                url: 'https://placehold.jp/3d4070/ffff00/50x50.png?text=%E5%B0%8F%E6%9E%97',
+            },
+            {
+                label: '加藤',
+                value: 861000,
+                url: 'https://placehold.jp/3d4070/ffffff/50x50.png?text=%E5%8A%A0%E8%97%A4',
+            },
+        ];
+
+        //全体をスケーリング
+        const xScale = d3
+            .scaleLinear()
+            .domain([0, d3.max(dataset, (d) => d.value)])
+            .range([0, 500 - 100]);
+
+        //領域確保
+        const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 500 300');
+
+        //画像を配置
+        svg
+            .selectAll('image')
+            .data(dataset)
+            .join('image')
+            .attr('href', (d) => d.url)
+            .attr('x', 0)
+            .attr('y', (d, i) => i * 30)
+            .attr('width', 30);
+
+        //メーターを配置
+        svg
+            .selectAll('rect')
+            .data(dataset)
+            .join('rect')
+            .attr('x', 40)
+            .attr('y', (d, i) => i * 30)
+            .attr('width', (d) => xScale(d.value))
+            .attr('height', 30)
+            .attr("fill", "#ffff00")
+            //奇数番目の色を変更
+            .style("fill", function (d, i) {
+                return i % 2
+                    ? '#00ffff'
+                    : 'sylver';
+            })
+
+        //名字と順位を配置
+        svg
+            .selectAll('.label')
+            .data(dataset)
+            .join('text')
+            .classed('label', true)
+            .attr('font-size', '10')
+            .attr('x', (d) => 50)
+            .attr('y', (d, i) => i * 30 + 18)
+            .text((d, i) => `${i + 1}位：${d.label}`);
+
+        //人数を表示
+        svg
+            .selectAll('.value')
+            .data(dataset)
+            .join('text')
+            .classed('value', true)
+            .attr('font-size', '8')
+            .attr('x', (d) => xScale(d.value) + 45)
+            .attr('y', (d, i) => i * 30 + 20)
+            .text((d) => `${d.value}人`);
+    </script>
+</body>
+
+</html>

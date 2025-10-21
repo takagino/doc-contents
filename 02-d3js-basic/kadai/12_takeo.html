@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>都道府県魅力度ランキング</title>
+    <style>
+        h1 {
+            text-align: center;
+            color: #f3b72b;
+        }
+
+        #chart svg {
+            width: 100%;
+            height: auto;
+            background-color: #eee;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <h1>都道府県魅力度ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+        const dataset = [
+            {
+                label: '北海道',
+                value: 70.7,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhKod8-UvHPTiGnJ_xHsT9WEq68R785giKwJooNeScS4FG8YOwb3WwmdHUSqmxm9UEKSJA1cahx-N77HPx2C3TyovmfNN7grR-AE20v70BhDM_HKy2McCkqFuz-rthnOJjU44nlwgUvpWOn/s180-c/japan_character1_hokkaidou.png',
+            },
+            {
+                label: '京都府',
+                value: 52.6,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiTalTm2qWBMIRBVn3VcCzFWb6ilxPdqO04t_9mPPhzKs0f2bejAQ0SP2BCi_tPEFaZtGrXO1P_GyEYdiQd1EL2mQCWOjzDPN6g8u-eRUZbXQct-abqvtkivy0itgdWS3DAKbEknzixEnpl/s400/japan_character5_kinki3_kyouto.png',
+            },
+            {
+                label: '沖縄県',
+                value: 48.6,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi4jKrKG2Lkto91KKCHRuXBGnMn550ogt8nKp5rptZAqEUkV-CIQwBzMYJ1uVsERVeq2MR51AhBbVaJauoDz6FIGEVICtEK7zTJKP9E6gcp04e9WMSnh4mFXT8wR9o5bCAGjecBK3jbsgwi/s400/japan_character9_okinawa.png',
+            },
+            {
+                label: '神奈川県',
+                value: 43.1,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhr-6Qw1qA3P5g6B1afMRT5T9YrFA9xw4E1aGuZmZoDPPBwQMl4oxbs-7X4fuhnW-ZWcJa6C9fu4w4oi6HmZ_2N7akiQO-QlM078W3BHkUFBFAphEgvqgrrvU9PJ4-FY87qSJy22l6FGryj/s400/japan_character3_kantou7__kanagawa.png',
+            },
+            {
+                label: '東京都',
+                value: 42.1,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiSc-GnPQRuNQMSWh3PTiIg-qdsZKyMSmxEroCq9O4BRe9kSQvXb54SahpHR1fhD92Ui7iNEg_dsqoAFKs7Uc8Lj1wPjpjFr7qNQ8ZLBBqu0QEfmm-4wo96erasmet3dUSHYU61_U-j1FW0/s400/japan_character3_kantou6__tokyo.png',
+            },
+            {
+                label: '福岡県',
+                value: 39.4,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhsnu12uq9ryIblw6DPAwG4fpGsAQrHi8XMz-AirZz0OhWn-VE9imWIuPNJYBm0qYQWA1ZT_Xyv8sV_k621BvJP5cJjentOuJnY4eLgdbqUjP7NwgtksvZWo0finazIqRx5JgLprTblbD-j/s400/japan_character8_kyuusyuu1_fukuoka.png',
+            },
+            {
+                label: '長野県',
+                value: 36.8,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjpaqgP0ZLCwG96FJoNONwtJX_z-BRRERDaWNqBNNayq60LgPXw9soz9hbc9ic0Yhyb_UIIGHPt8XZW1wuWa-ibQ16yUxZHHDO9I-X_8L07yn_sFJXPu8LqN4eIUpawEOwOA07jmR0mhOW1/s400/japan_character4_chuubu2_nagano.png',
+            },
+            {
+                label: '大阪府',
+                value: 35.6,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYnjdEqpRuhe3t6CUEoRtXVuv8h2sFFu_y1XdV7NPdS4hSo43Da0whgvquPIvpQK_anYyXbY7KZDwJ_YD06I8F1zxSpxt7Gnz8oE2u8bHk456Pu8G3btr5XO4aJJnzUmLB4m7bYdwCsGcZ/s180-c/japan_character5_kinki4_osaka.png',
+            },
+            {
+                label: '奈良県',
+                value: 35.4,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgrYGk2BYO3Nhqs62MTOyOZ-uXRpjevHUe02yM15nw9wQ4so6ycxXByy4iv2bFUraaTp4eFKCS_WS777Rh2aO3jU4IC5GirUM8p5xaOi4tJVzHdZHw0vA8lRqRCm-glx2kGHZv9lIyezM3f/s180-c/japan_character5_kinki6_nara.png',
+            },
+            {
+                label: '兵庫県',
+                value: 34.9,
+                url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiqzQOwfndTfUVFAQ_MDy7D_MjQ0k4o7XFL4VMoEjTVoxVQHlx_e8CWIE2PgQ2O0yuz_lipBEfrGchuVsOuNgphO9tI-zyd6lsu77uC8Gd43XVX-ZvIHBf_Ix-Lg38wwrvWyXQnymYg2jpd/s400/japan_character5_kinki5_hyougo.png',
+            },
+        ];
+
+        const xScale = d3
+            .scaleLinear()
+            .domain([0, 158])
+            .range([0, 500 - 100]);
+
+        const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 500 300');
+
+        svg.selectAll('image')
+            .data(dataset)
+            .join('image')
+            .attr('href', (d) => d.url)
+            .attr('x', 0)
+            .attr('y', (d, i) => i * 30)
+            .attr('width', 30);
+
+        svg
+            .selectAll('rect')
+            .data(dataset)
+            .join('rect')
+            .attr('x', 40)
+            .attr('y', (d, i) => i * 30 + 10)
+            .attr('width', (d) => xScale(d.value))
+            .attr('height', 10)
+            // .attr('fill', '#ffff00');
+            .attr('fill', (d, i) => {
+                if (i === 0) {
+                    return '#FFD700'; // 金（1位）
+                } else if (i === 1) {
+                    return '#C0C0C0'; // 銀（2位）
+                } else if (i === 2) {
+                    return '#CD7F32'; // 銅（3位）
+                } else {
+                    return '#A8E6A3'; // それ以外（黄色）
+                }
+            });
+
+        // クラス名で取得
+
+        svg
+            .selectAll('.label')
+            .data(dataset)
+            .join('text')
+            .classed('label', true)//クラス名を追加
+            .attr('font-size', '10')
+            .attr('x', (d) => 40)
+            .attr('y', (d, i) => i * 30 + 10)
+            .text((d, i) => `${i + 1}位：${d.label}`)
+            .style("font-weight", (d, i) => {
+                if (i === 0) return "bold";   // 1位
+                if (i === 1 || i === 2) return 600; // 2・3位
+                return "normal"; // それ以外
+            });
+
+        svg
+            .selectAll('.value')
+            .data(dataset)
+            .join('text')
+            .classed('value', true)
+            .attr('font-size', '8')
+            .attr('x', (d) => xScale(d.value) + 45)
+            .attr('y', (d, i) => i * 30 + 19)
+            .text((d) => `${d.value}点`);
+    </script>
+</body>
+
+</html>

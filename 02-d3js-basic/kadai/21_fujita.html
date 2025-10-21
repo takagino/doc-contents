@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>モンスター総選挙</title>
+    <style>
+        #chart svg {
+            width: 100%;
+            height: auto;
+            padding: 60px;
+            border: 10px solid #ff0;
+            background-color: rgb(255, 255, 195);
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 80%;
+            margin: 100px auto;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 60px;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <h1>モンスターハンター20周年記念　モンスター総選挙結果発表</h1>
+    <div id="chart"></div>
+
+    <script>
+        const inPodium = [
+            {
+                label: 'ネルギガンテ',
+                value: 2,
+                url: 'https://www.monsterhunter.com/20th/assets/images/vote-monster/result/2.jpg',
+            },
+            {
+                label: 'ジンオウガ',
+                value: 1,
+                url: 'https://www.monsterhunter.com/20th/assets/images/vote-monster/result/1.jpg',
+            },
+            {
+                label: 'ラギアクルス',
+                value: 3,
+                url: 'https://www.monsterhunter.com/20th/assets/images/vote-monster/result/3.jpg',
+            }
+        ];
+
+        const outPodium = [
+            {
+                label: 'バルファルク',
+                value: 4,
+                url: 'https://www.monsterhunter.com/20th/assets/images/vote-monster/result/4.jpg',
+            },
+            {
+                label: 'ゴアマガラ',
+                value: 5,
+                url: 'https://www.monsterhunter.com/20th/assets/images/vote-monster/result/5.jpg',
+            },
+        ];
+
+        const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 500 200');
+
+        svg
+            .selectAll('.image-podium')
+            .data(inPodium)
+            .join('image')
+            .classed('image-podium', true) //クラス名を追加
+            .attr('href', (d) => d.url)
+            .attr('x', (d, i) => 80 * i + 10)
+            .attr('y', (d) => 70 - (4 - d.value) * 20)
+            .attr('width', 60);
+
+        svg
+            .selectAll('.image-outpodium')
+            .data(outPodium)
+            .join('image')
+            .classed('image-outpodium', true) //クラス名を追加
+            .attr('href', (d) => d.url)
+            .attr('x', (d, i) => 80 * i + 260)
+            .attr('y', (d) => 70)
+            .attr('width', 60);
+
+        svg.selectAll('.podium')
+            .data(inPodium)
+            .join('rect')
+            .classed('podium', true) //クラス名を追加
+            .attr('x', (d, i) => 80 * i)
+            .attr('y', (d) => 130 - (4 - d.value) * 20)
+            .attr('width', 80)
+            .attr('height', (d) => (4 - d.value) * 20)
+            .attr('fill', '#00f')
+
+        svg.selectAll('.value-podium')
+            .data(inPodium)
+            .join('text')
+            .classed('value-podium', true) //クラス名を追加
+            .attr('font-size', '15')
+            .attr('x', (d, i) => 80 * i + 40)
+            .attr('y', (d) => 145 - (4 - d.value) * 20)
+            .attr('fill', '#fff')
+            .text((d) => d.value);
+
+        svg.selectAll('.value-outpodium')
+            .data(outPodium)
+            .join('text')
+            .classed('value-outpodium', true) //クラス名を追加
+            .attr('font-size', '15')
+            .attr('x', (d, i) => 80 * i + 290)
+            .attr('y', (d) => 150)
+            .attr('fill', '#00f')
+            .text((d) => d.value);
+
+        svg
+            .selectAll('.label-podium')
+            .data(inPodium)
+            .join('text')
+            .classed('label-podium', true) //クラス名を追加
+            .attr('font-size', '10')
+            .attr('x', (d, i) => 80 * i + 10)
+            .attr('y', (d) => 70 - (4 - d.value) * 20)
+            .text((d) => d.label);
+
+        svg
+            .selectAll('.label-outpodium')
+            .data(outPodium)
+            .join('text')
+            .classed('label-outpodium', true) //クラス名を追加
+            .attr('font-size', '10')
+            .attr('x', (d, i) => 80 * i + 260)
+            .attr('y', (d) => 70)
+            .text((d) => d.label);
+
+    </script>
+</body>
+
+</html>

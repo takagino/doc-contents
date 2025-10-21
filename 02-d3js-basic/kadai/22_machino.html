@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>おいしいアイスランキング</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=M PLUS Rounded 1c&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "M PLUS Rounded 1c", sans-serif;
+        background: #fff8f0;
+        color: #5a4d41;
+        margin: 20px auto;
+      }
+      h1 {
+        text-align: center;
+        color: #ff758f;
+        text-shadow: 1px 1px 3px #fce4ec;
+        margin-bottom: 30px;
+      }
+      #chart {
+        width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      #chart svg {
+        width: 100%;
+        height: auto;
+        background-color: #fff0f6;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(255, 117, 143, 0.3);
+        margin: 0 auto;
+      }
+      .axis-label {
+        font-weight: bold;
+        fill: #a65d77;
+        font-size: 14px;
+      }
+      .line {
+        fill: none;
+        stroke: #ff758f;
+        stroke-width: 3;
+      }
+      .bar {
+        fill: #f7a1b5;
+        rx: 8;
+        ry: 8;
+      }
+      .bar-value {
+        fill: #a65d77;
+        font-weight: 600;
+        font-size: 13px;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+      }
+      .line-label {
+        fill: #d44a6a;
+        font-weight: 600;
+        font-size: 13px;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+      }
+      .line-point {
+        fill: #ff758f;
+        stroke: white;
+        stroke-width: 2;
+      }
+      text {
+        font-family: "M PLUS Rounded 1c", sans-serif;
+      }
+      .axis path,
+      .axis line {
+        stroke: #dba5b0;
+      }
+      .bar:hover {
+        fill: #ff92ad;
+        cursor: pointer;
+        filter: drop-shadow(0 2px 4px rgba(255, 117, 143, 0.6));
+        transition: fill 0.3s ease;
+      }
+      image {
+        filter: drop-shadow(0 2px 4px rgba(255, 117, 143, 0.5));
+        border-radius: 12px;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>おいしいアイスランキング（点数と人数）</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: "森永乳業 ピノ",
+          score: 81.9,
+          count: 2679,
+          url: "https://m.media-amazon.com/images/I/51Al2EQWV9L._SS500_.jpg",
+        },
+        {
+          label: "グリコ パピコ チョココーヒー",
+          score: 80.8,
+          count: 1940,
+          url: "https://img.ranking.net/uploads/item/image/37/9d/b6/default_cropped_papiko.jpg?v=1610592148",
+        },
+        {
+          label: "森永乳業 PARM チョコレート",
+          score: 80.6,
+          count: 1676,
+          url: "https://img.ranking.net/uploads/item/image/42/9e/b7/default_cropped_43549-large.jpg?v=1670392801",
+        },
+        {
+          label: "森永製菓 板チョコアイス",
+          score: 80.4,
+          count: 999,
+          url: "https://images-fe.ssl-images-amazon.com/images/I/312kLnwKHML.CR32,37,281,281.jpg",
+        },
+        {
+          label: "ロッテ 雪見だいふく",
+          score: 80.4,
+          count: 3469,
+          url: "https://img.ranking.net/uploads/item/image/df/2e/e8/default_cropped_%E9%9B%AA%E8%A6%8B%E3%81%9F%E3%82%99%E3%81%84%E3%81%B5%E3%81%8F.png?v=1610592311",
+        },
+      ];
+
+      const width = 800;
+      const height = 550;
+      const margin = { top: 100, right: 70, bottom: 200, left: 70 };
+
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      const xScale = d3
+        .scaleBand()
+        .domain(dataset.map((d) => d.label))
+        .range([margin.left, width - margin.right])
+        .padding(0.4);
+
+      const yLeftScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(dataset, (d) => d.score) * 1.1])
+        .range([height - margin.bottom, margin.top])
+        .nice();
+
+      const yRightScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(dataset, (d) => d.count) * 1.1])
+        .range([height - margin.bottom, margin.top])
+        .nice();
+
+      // X軸
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text")
+        .attr("transform", "rotate(-30)")
+        .attr("dy", "7em")
+        .style("text-anchor", "end")
+        .attr("fill", "#c06c84")
+        .attr("font-weight", "600");
+
+      // 左Y軸
+      svg
+        .append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(yLeftScale))
+        .selectAll("text")
+        .attr("fill", "#a65d77")
+        .attr("font-weight", "600");
+
+      // 左Y軸ラベル
+      svg
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", margin.left - 50)
+        .attr("y", margin.top - 40)
+        .attr("text-anchor", "middle")
+        .attr(
+          "transform",
+          `rotate(-90, ${margin.left - 50}, ${margin.top - 40})`
+        )
+        .text("点数（点）");
+
+      // 右Y軸
+      svg
+        .append("g")
+        .attr("transform", `translate(${width - margin.right},0)`)
+        .call(d3.axisRight(yRightScale))
+        .selectAll("text")
+        .attr("fill", "#d44a6a")
+        .attr("font-weight", "600");
+
+      // 右Y軸ラベル
+      svg
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", width - margin.right + 50)
+        .attr("y", margin.top - 40)
+        .attr("text-anchor", "middle")
+        .attr(
+          "transform",
+          `rotate(-90, ${width - margin.right + 50}, ${margin.top - 40})`
+        )
+        .text("人数（人）");
+
+      // 棒グラフ
+      const bars = svg
+        .selectAll(".bar")
+        .data(dataset)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", (d) => xScale(d.label))
+        .attr("width", xScale.bandwidth())
+        .attr("y", yLeftScale(0))
+        .attr("height", 0)
+        .attr("fill", "#f7a1b5")
+        .attr("rx", 10) // 角丸
+        .attr("ry", 10);
+
+      bars
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 150)
+        .attr("y", (d) => yLeftScale(d.score))
+        .attr("height", (d) => yLeftScale(0) - yLeftScale(d.score));
+
+      // 棒グラフ数値ラベル
+      const barValues = svg
+        .selectAll(".bar-value")
+        .data(dataset)
+        .join("text")
+        .attr("class", "bar-value")
+        .text((d) => d.score.toFixed(1))
+        .attr("x", (d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .attr("y", yLeftScale(0))
+        .attr("text-anchor", "middle")
+        .attr("fill", "#a65d77")
+        .attr("font-size", 13)
+        .style("opacity", 0);
+
+      barValues
+        .transition()
+        .duration(800)
+        .delay((d, i) => 1000 + i * 150)
+        .attr(
+          "y",
+          (d) =>
+            yLeftScale(d.score) + (yLeftScale(0) - yLeftScale(d.score)) / 2 + 6
+        )
+        .style("opacity", 1);
+
+      // 折れ線グラフの点の線の色と太さ
+      const line = d3
+        .line()
+        .x((d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .y((d) => yRightScale(d.count));
+
+      // 折れ線グラフ
+      const path = svg
+        .append("path")
+        .datum(dataset)
+        .attr("fill", "none")
+        .attr("stroke", "#ff758f")
+        .attr("stroke-width", 3)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x((d) => xScale(d.label) + xScale.bandwidth() / 2)
+            .y(() => yRightScale(0))
+        );
+
+      path
+        .transition()
+        .duration(1000)
+        .delay(dataset.length * 150)
+        .attrTween("d", function () {
+          const interpolator = d3.interpolateArray(
+            dataset.map((d) => yRightScale(0)),
+            dataset.map((d) => yRightScale(d.count))
+          );
+          return function (t) {
+            return d3
+              .line()
+              .x((d) => xScale(d.label) + xScale.bandwidth() / 2)
+              .y((d, i) => interpolator(t)[i])(dataset);
+          };
+        });
+
+      // 折れ線グラフの点
+      const circles = svg
+        .selectAll(".line-point")
+        .data(dataset)
+        .join("circle")
+        .attr("class", "line-point")
+        .attr("cx", (d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .attr("cy", yRightScale(0))
+        .attr("r", 6)
+        .attr("fill", "#ff758f")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      circles
+        .transition()
+        .duration(1000)
+        .delay(dataset.length * 150)
+        .attr("cy", (d) => yRightScale(d.count));
+
+      // 折れ線グラフの点の数値ラベル
+      const lineLabels = svg
+        .selectAll(".line-label")
+        .data(dataset)
+        .join("text")
+        .attr("class", "line-label")
+        .text((d) => d.count.toLocaleString())
+        .attr("x", (d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .attr("y", yRightScale(0) - 12)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#d44a6a")
+        .attr("font-size", 13)
+        .style("opacity", 0);
+
+      lineLabels
+        .transition()
+        .duration(800)
+        .delay(dataset.length * 150 + 500)
+        .attr("y", (d) => yRightScale(d.count) - 12)
+        .style("opacity", 1);
+
+      // アイス画像
+      svg
+        .selectAll("image")
+        .data(dataset)
+        .join("image")
+        .attr("xlink:href", (d) => d.url)
+        .attr("width", xScale.bandwidth() * 0.6)
+        .attr("height", xScale.bandwidth() * 0.6)
+        .attr("x", (d) => xScale(d.label) + xScale.bandwidth() * 0.2)
+        .attr("y", height - margin.bottom + 10)
+        .style("opacity", 0)
+        .style("border-radius", "15px")
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 150)
+        .style("opacity", 1);
+    </script>
+  </body>
+</html>

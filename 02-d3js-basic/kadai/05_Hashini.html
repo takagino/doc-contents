@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>2024年度 日本のペット人気ランキング（TOP5）</title>
+    <style>
+        :root {
+            --bg: #fafafa;
+            --accent: #2b7cff;
+            --muted: #666;
+            --bar-bg: #ffd54f;
+        }
+
+        body {
+
+    margin: 0;
+    font-family: "Noto Sans JP", Helvetica, Arial, sans-serif;
+    background: url('https://images.unsplash.com/photo-1756058811333-968c916c47f6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1287') no-repeat center center fixed;
+    background-size: cover;
+    color: #222;
+    padding: 200px 0 24px 0;
+    box-sizing: border-box;
+}
+
+
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            padding-bottom: 25px;
+        }
+
+        #chart {
+            width: 100%;
+            overflow: visible;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .bar-group {
+            cursor: pointer;
+        }
+
+        .bar-bg {
+            fill: #eee;
+
+
+        }
+
+        .bar {
+            fill: var(--bar-bg);
+        }
+
+        .label {
+            font-size: 12px;
+            fill: #111;
+        }
+
+        .value {
+            font-size: 11px;
+            fill: #111;
+        }
+
+        .tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(20, 20, 20, 0.9);
+            color: white;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            transform-origin: left top;
+            transition: transform 120ms ease, opacity 120ms ease;
+            opacity: 0;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .pet-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            stroke: white;
+            stroke-width: 2px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width:520px) {
+            .label {
+                font-size: 11px;
+            }
+
+            .value {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <header>
+            <h1>2024年度 日本のペット人気ランキング — TOP5</h1>
+        </header>
+
+        <div id="chart"></div>
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+        const originalData = [
+            {
+                rank: 1,
+                label: "犬 (Dog)",
+                value: 38,
+                color: "#ff8a65",
+                image: "https://images.unsplash.com/photo-1625316708582-7c38734be31d?auto=format&fit=crop&q=80&w=100"
+            },
+            {
+                rank: 2,
+                label: "猫 (Cat)",
+                value: 34,
+                color: "#81c784",
+                image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=100&h=100&fit=crop"
+            },
+            {
+                rank: 3,
+                label: "小動物（ハムスター等）",
+                value: 10,
+                color: "#ffd54f",
+                image: "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=100&h=100&fit=crop"
+            },
+            {
+                rank: 4,
+                label: "鳥 (Bird)",
+                value: 8,
+                color: "#64b5f6",
+                image: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=100&h=100&fit=crop"
+            },
+            {
+                rank: 5,
+                label: "魚 (Fish)",
+                value: 6,
+                color: "#90a4ae",
+                image: "https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=100&h=100&fit=crop"
+            }
+        ];
+
+        let dataset = originalData.map(d => ({ ...d }));
+
+        const margin = { top: 8, right: 80, bottom: 8, left: 220 };
+        const barHeight = 44;
+        const gap = 12;
+        const svgWidth = 920;
+        const svgHeight = dataset.length * (barHeight + gap) + margin.top + margin.bottom;
+
+        const chartDiv = d3.select("#chart");
+        const svg = chartDiv
+            .append("svg")
+            .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const xMax = d3.max(dataset, d => d.value) || 100;
+        const xScale = d3.scaleLinear().domain([0, xMax]).range([0, svgWidth - margin.left - margin.right]);
+
+        const tooltip = d3.select("#tooltip");
+
+        function render(data, transitionDuration = 700) {
+            const newHeight = data.length * (barHeight + gap) + margin.top + margin.bottom;
+            svg.attr("viewBox", `0 0 ${svgWidth} ${newHeight}`);
+
+            const maxVal = d3.max(data, d => d.value) || 100;
+            xScale.domain([0, maxVal * 1.1]);
+
+            const groups = g.selectAll(".bar-group").data(data, d => d.label);
+
+            groups.exit()
+                .transition()
+                .duration(transitionDuration / 2)
+                .style("opacity", 0)
+                .remove();
+
+            const groupsEnter = groups.enter()
+                .append("g")
+                .attr("class", "bar-group")
+                .attr("transform", (d, i) => `translate(0, ${i * (barHeight + gap)})`)
+                .style("opacity", 0)
+                .on("mouseenter", (event, d) => {
+                    tooltip.style("opacity", 1)
+                        .style("transform", "scale(1)")
+                        .html(`<strong>${d.label}</strong><div>人気スコア：${d.value}</div>`);
+                })
+                .on("mousemove", (event) => {
+                    tooltip.style("left", (event.pageX + 14) + "px")
+                        .style("top", (event.pageY + 14) + "px");
+                })
+                .on("mouseleave", () => {
+                    tooltip.style("opacity", 0).style("transform", "scale(0.95)");
+                });
+
+            groupsEnter.append("rect")
+                .attr("class", "bar-bg")
+                .attr("x", -margin.left)
+                .attr("y", 0)
+                .attr("rx", 8)
+                .attr("ry", 8)
+                .attr("width", svgWidth - margin.right)
+                .attr("height", barHeight);
+
+            groupsEnter.append("text")
+                .attr("class", "label")
+                .attr("x", -16)
+                .attr("y", barHeight / 2)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "end")
+                .text(d => d.label);
+
+            groupsEnter.append("text")
+                .attr("class", "value rank")
+                .attr("x", -margin.left + 8)
+                .attr("y", barHeight / 2)
+                .attr("dy", "0.35em")
+                .style("font-weight", "700")
+                .text(d => `#${d.rank}`);
+
+            groupsEnter.append("rect")
+                .attr("class", "bar")
+                .attr("x", 0)
+                .attr("y", 6)
+                .attr("rx", 8)
+                .attr("ry", 8)
+                .attr("height", barHeight - 12)
+                .attr("width", 0)
+                .attr("fill", d => d.color);
+
+            groupsEnter.append("text")
+                .attr("class", "value value-label")
+                .attr("x", 6)
+                .attr("y", barHeight / 2)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "start")
+                .text(d => `${d.value}`);
+
+            // 🐾 Add pet image after the value bar
+            groupsEnter.append("image")
+                .attr("class", "pet-icon")
+                .attr("x", d => xScale(d.value) + 10)
+                .attr("y", 2)
+                .attr("width", 40)
+                .attr("height", 40)
+                .attr("clip-path", "circle(20px at center)")
+                .attr("href", d => d.image);
+
+            const merged = groupsEnter.merge(groups);
+
+            merged.transition()
+                .duration(transitionDuration)
+                .attr("transform", (d, i) => `translate(0, ${i * (barHeight + gap)})`)
+                .style("opacity", 1);
+
+            merged.select(".bar")
+                .transition()
+                .duration(transitionDuration)
+                .attr("width", d => xScale(d.value))
+                .attr("fill", d => d.color);
+
+            merged.select(".value-label")
+                .transition()
+                .duration(transitionDuration)
+                .attr("x", d => Math.max(6, xScale(d.value) - 40))
+                .text(d => `${d.value} pts`);
+
+            merged.select(".pet-icon")
+                .transition()
+                .duration(transitionDuration)
+                .attr("x", d => xScale(d.value) + 10);
+        }
+
+        render(dataset);
+    </script>
+</body>
+
+</html>

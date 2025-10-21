@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日本国内 飼育犬種数ランキング</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #ffffff;
+      }
+      #chart svg {
+        width: 100%;
+        height: auto;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>日本国内 飼育犬種数ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: "トイプードル",
+          value: 73125,
+          url: "https://www.promanage-pet.jp/img/common/dog/img_dog_l_toypoodle.png",
+        },
+        {
+          label: "チワワ",
+          value: 47313,
+          url: "https://www.promanage-pet.jp/img/common/dog/img_dog_l_chihuahua.png",
+        },
+        {
+          label: "ミニチュアダックスフンド",
+          value: 22308,
+          url: "https://www.promanage-pet.jp/img/common/dog/img_dog_l_minidachshund.png",
+        },
+        {
+          label: "ポメラニアン",
+          value: 21783,
+          url: "https://png.pngtree.com/png-clipart/20250612/original/pngtree-pomeranian-isolated-on-a-transparent-background-png-image_21180959.png",
+        },
+        {
+          label: "ミニチュアシュナウザー",
+          value: 15137,
+          url: "https://www.promanage-pet.jp/img/common/dog/img_dog_l_minischnauzer.png",
+        },
+        {
+          label: "マルチーズ",
+          value: 10495,
+          url: "https://png.pngtree.com/png-vector/20250719/ourmid/pngtree-cute-and-charming-solid-white-maltese-dog-pet-animal-isolated-on-png-image_16803728.webp",
+        },
+        {
+          label: "フレンチブルドッグ",
+          value: 10129,
+          url: "https://www.promanage-pet.jp/img/common/dog/img_dog_l_frenchbull.png",
+        },
+        {
+          label: "ヨークシャーテリア",
+          value: 8444,
+          url: "https://png.pngtree.com/png-vector/20241205/ourmid/pngtree-small-dog-with-a-scruffy-coat-png-image_14587206.png",
+        },
+      ];
+
+      // 最大値を指定し、その範囲に収まってくれるようなもの？
+      // 0~158の範囲をrangeに変換
+      const xScale = d3
+        .scaleLinear()
+        .domain([0, 100000])
+        .range([0, 600 - 100]);
+
+      const width = 500;
+      const height = 350;
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("viewBox", "0 0 500 350");
+
+      //はいけい
+      const defs = svg.append("defs");
+
+      // 水玉
+      defs
+        .append("pattern")
+        .attr("id", "dotPattern")
+        .attr("patternUnits", "userSpaceOnUse")
+        .attr("width", 10)
+        .attr("height", 10)
+        .append("circle")
+        .attr("cx", 2)
+        .attr("cy", 2)
+        .attr("r", 1.5)
+        .attr("fill", "#aee7ff");
+
+      svg
+        .append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "url(#dotPattern)")
+        .attr("opacity", 0.5)
+        .lower();
+
+      // グラデ
+      defs
+        .append("linearGradient")
+        .attr("id", "pinkRed")
+        .attr("x1", "0%")
+        .attr("x2", "80%")
+        .selectAll("stop")
+        .data([
+          { offset: "0%", color: "#f9b6c1" },
+          { offset: "100%", color: "#fd6b6e" },
+        ])
+        .enter()
+        .append("stop")
+        .attr("offset", (d) => d.offset)
+        .attr("stop-color", (d) => d.color);
+
+      // グラフ
+      svg
+        .selectAll("rect.bar")
+        .data(dataset)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", 40)
+        .attr("y", (d, i) => i * 40 + 10)
+        .attr("width", (d) => xScale(d.value))
+        .attr("height", 20)
+        .attr("rx", 3)
+        .attr("fill", "url(#pinkRed)");
+
+      svg
+        .selectAll(".lab")
+        .data(dataset)
+        .join("text")
+        .classed("lab", true)
+        .attr("font-size", "10")
+        .attr("x", (d) => 40)
+        .attr("y", (d, i) => i * 40 + 8)
+        .text((d) => d.label)
+        .attr("fill", "#222222");
+
+      svg
+        .selectAll(".value")
+        .data(dataset)
+        .join("text")
+        .classed("value", true)
+        .attr("font-size", "8")
+        .attr("x", (d) => d.value + 40)
+        .attr("y", (d, i) => i * 40 + 20)
+        .text((d) => d.value);
+
+      svg
+        .selectAll("image")
+        .data(dataset)
+        .join("image")
+        .attr("href", (d) => d.url)
+        .attr("x", (d) => 0)
+        .attr("y", (d, i) => i * 40)
+        .attr("width", (d) => 30);
+    </script>
+  </body>
+</html>

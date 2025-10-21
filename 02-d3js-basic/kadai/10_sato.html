@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>回転寿司店でよく食べるネタランキング</title>
+
+    <style>
+        body{
+            width: 95%;
+
+            background-color: #fff9ed;
+            margin:0 auto;
+        }
+
+        h1{
+            font-size: 28px;
+            text-align: center;
+            
+            color: #b35b78;
+            padding:10px 0;
+        }
+
+        #chart svg {
+            height: auto;
+
+            background-color: #ffffff;
+            padding:15px;
+            border-radius: 10px;
+        }
+    </style>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+
+<body>
+    <h1>回転寿司店でよく食べるネタランキング【TOP10】</h1>
+    <div id="chart"></div>
+
+
+    <script>
+
+    const dataset = [
+        {
+            label: 'サーモン',
+            value: 51.1,
+            url: 'https://img.ranking.net/uploads/item/image/eb/2b/86/default_cropped_shutterstock_1381115645.jpg?v=1671091807',
+        },
+    
+        {
+            label: 'マグロ',
+            value: 34.7 ,  
+            url: 'https://img.ranking.net/uploads/item/image/fa/12/1c/default_cropped_shutterstock_737686219.jpg?v=1610085290',
+        },
+        {
+            label: 'ハマチ・ブリ',
+            value: 34.5,
+            url: 'https://img.ranking.net/uploads/item/image/46/ad/e1/default_cropped_shutterstock_230771845.jpg?v=1610085321',
+        },
+        {
+            label: '中トロ',
+            value: 30.8,
+            url: 'https://img.ranking.net/uploads/item/image/20/a5/05/default_cropped_shutterstock_1327506008.jpg?v=1593684342',
+        },
+        {
+            label: 'エビ',
+            value: 30.3,
+            url: 'https://img.ranking.net/uploads/item/image/53/05/29/default_cropped_shutterstock_758562661.jpg?v=1610084552',
+        },
+        {
+            label: 'ねぎとろ',
+            value: 24.2,
+            url: 'https://img.ranking.net/uploads/item/image/09/65/88/default_cropped_pixta_48751455_S.jpg?v=1610617233',
+        },
+        {
+            label: 'えんがわ',
+            value: 22.9,
+            url: 'https://img.ranking.net/uploads/item/image/37/92/cf/default_cropped_shutterstock_686593111.jpg?v=1601450552',
+        },
+        {
+            label: 'イカ',
+            value: 22.6,
+            url: 'https://img.ranking.net/uploads/item/image/fd/cc/fe/default_cropped_shutterstock_1654350043.jpg?v=1707290060',
+        },
+        {
+            label: 'いくら',
+            value: 20.4,
+            url: 'https://img.ranking.net/uploads/item/image/e5/7a/39/default_cropped_shutterstock_1222320862.jpg?v=1610085289',
+        },
+        {
+            label: 'ホタテ',
+            value: 16.9,
+            url: 'https://img.ranking.net/uploads/item/image/76/5d/a9/default_cropped_shutterstock_1025239933.jpg?v=1610084552',
+        },
+    ];
+    
+    // X軸のスケール（数値を幅に変換）
+    const xScale = d3
+    .scaleLinear()
+    .domain([0, d3.max(dataset, (d) => d.value)]) // 0からデータの最大値まで
+    .range([0, 500 - 100]); // 幅を500pxからラベル分引いた値まで
+
+
+        const svg = d3
+        .select('#chart')
+        .append('svg')
+        .attr('viewBox', '0 0 500 300');
+
+        // image要素の追加
+        svg
+        .selectAll('image')
+        .data(dataset)
+        .join('image')
+        .attr('href', (d) => d.url)
+        .attr('x', (d) => xScale(d.value) +5)
+        .attr('y', (d, i) => i * 30 +5)
+        .attr('width', 25);
+
+        svg
+        .selectAll('rect')
+        .data(dataset)
+        .join('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30 + 10)
+        .attr('width', (d) => xScale(d.value))
+        .attr('height', 10)
+        .attr('fill', '#c1f054');
+
+        svg
+        .selectAll('.label')
+        .data(dataset)
+        .join('text')
+        .classed('label', true)   //クラス名を追加
+        .attr('font-size', '8px')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30 +8)
+        .text((d) => d.label)
+        .text((d, i) => `${i + 1}位：${d.label}`)
+        .attr('fill', '#2e4200');
+
+        svg
+        .selectAll('.value')
+        .data(dataset)
+        .join('text')
+        .classed('value', true)   //クラス名を追加
+        .attr('font-size', '6px')
+        .attr('x', (d) => xScale(d.value) -20)
+        .attr('y', (d, i) => i * 30 + 26)
+        .text((d) => d.value)
+        .text((d) => `${d.value}%`)
+        .attr('fill', '#6f9c06');
+
+        
+
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025年上半期 K-POP売り上げランキング</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/the-new-css-reset/css/reset.min.css">
+    <style>
+        #chart svg {
+            margin-top: 90px;
+            padding: 0 80px;
+            width: 100%;
+            height: auto;
+            background-color: transparent;
+            border: solid #000000 2px;
+        }
+
+        body {
+            background-color: #EAD7A4;
+            font-family: 'Times New Roman', Times, serif;
+            letter-spacing: (50/1000)rem;
+        }
+
+        .inner {
+            max-width: 1280px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        span {
+            margin-top: 140px;
+            font-size: 50px;
+            font-weight: bold;
+            line-height: 1.6em;
+        }
+
+        h1 {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 105px;
+            font-weight: bold;
+            line-height: 1em;
+        }
+
+        .title {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.6em;
+        }
+
+        .text {
+            margin-top: 70px;
+            text-align: left;
+            font-size: 36px;
+            font-weight: bold;
+            line-height: 1.6em;
+        }
+
+        .last {
+            margin: 30px 0 110px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.6em;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+    <!-- html -->
+    <div class="inner">
+        <h1><span>K-POP sales ranking for the</span><br>
+            first half of 2025</h1>
+        <p class="title">（2025年上半期 K-POP売り上げランキング）</p>
+        <div id="chart"></div>
+        <p class="text">
+            This time, I ranked K-POP idols for the first half of the year, so if I have the opportunity, I would like
+            to create a
+            graph of the rankings for the second half of the year as well.
+        </p>
+        <p class="last">（今回は上半期のK-POPアイドルのランキングだったので機会があったら下半期のランキングのグラフも作ってみたいです。）</p>
+    </div>
+
+
+    <!-- JavaScript -->
+    <script>
+        const dataset = [
+            {
+                label: '『5th Album `HAPPY BURSTDAY`』- SEVENTEEN',
+                value: 253,
+                url: ''
+            },
+            {
+                label: '『DESIRE : UNLEASH』- ENHYPEN',
+                value: 209,
+                url: ''
+            },
+            {
+                label: '『IVE EMPATHY』- IVE',
+                value: 142,
+                url: ''
+            },
+            {
+                label: '『ODYSSEY - The 1st Album』- RIIZE',
+                value: 141,
+                url: ''
+            },
+            {
+                label: '『BLUE PARADISE』- ZEROBASEONE',
+                value: 128,
+                url: ''
+            },
+            {
+                label: '『No Genre』- BOYNEXTDOOR',
+                value: 114,
+                url: ''
+            }
+        ]
+
+        //x軸のスケール（数値を幅に変換）
+        const xScale = d3
+            .scaleLinear()
+            .domain([0, d3.max(dataset, (d) => d.value)])//0からデータの最大値まで
+            .range([0, 500 - 100]);//幅を500pxからラベル分引いた値まで
+
+        const svg = d3
+            .select('#chart')
+            .append('svg')
+            .attr('viewBox', '0 0 300 300');
+
+        svg
+            .selectAll('rect')
+            .data(dataset)
+            .join('rect')
+            .attr('x', (d, i) => i * 55)
+            .attr('y', (d) => 300 - d.value)
+            .attr('width', 20)
+            .attr('height', (d) => d.value)
+            .attr('fill', '#000');
+
+        svg
+            .selectAll('.label')
+            .data(dataset)
+            .join('text')
+            .classed('label', true)
+            .attr('font-size', '3')
+            .attr('x', (d, i) => i * 55)
+            .attr('y', (d) => 300 - d.value - 5)
+            .text((d, i) => `${i + 1}位： ${d.label}`);
+
+        svg
+            .selectAll('.value')
+            .data(dataset)
+            .join('text')
+            .classed('value', true)
+            .attr('font-size', '3')
+            .attr('x', (d, i) => i * 55)
+            .attr('y', (d) => 300 - d.value - 1)
+            .text((d) => `${d.value}億円`);
+    </script>
+
+</body>
+
+</html>

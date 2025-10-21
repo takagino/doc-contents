@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2024年映画興行収入ランキング</title>
+    <style>
+      #chart svg {
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+        height: auto;
+padding-top: 10px;
+      }
+
+        body {
+        font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+        background: linear-gradient(180deg, #f7f8fa 0%, #e9ecf3 100%);
+        color: #222;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        padding: 40px 10px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+        letter-spacing: 0.05em;
+      }
+
+      #chart {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+      }
+
+      rect {
+        fill: #ffef5b;
+        rx: 5;
+        ry: 5;
+        transition: all 0.2s ease;
+      }
+
+      rect:hover {
+        fill: #ffd700;
+        transform: scaleX(1.05);
+      }
+
+      text.label {
+        fill: #333;
+        font-weight: 600;
+      }
+
+      text.value {
+        fill: #555;
+        font-weight: 500;
+      }
+
+      image {
+        clip-path: circle(12px at center);
+      }
+    </style>
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>週間アルバム売上ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+
+      // 画像のURLを追加
+const dataset = [
+  {
+    label: '「HYPE VIBES」 CxM(SEVENTEEN)',
+    value: 102703,
+
+  },
+  {
+    label: '「倍倍FIGHT!」 CANDY TUNE',
+    value: 32127,
+
+  },
+
+  {
+    label: '「i-dle」 i-dle',
+    value: 22433,
+
+  },
+  {
+    label: '「TASTE」 HAECHAN',
+    value: 17875,
+  },
+  {
+    label: '「SAKU」 ONEW',
+    value: 13508,
+  },
+  {
+    label: '「KARMA」 Stray Kids',
+    value: 11880,
+  },
+  {
+    label: '「LOVE PULSE」 TREASURE',
+    value: 11491,
+  },
+  {
+    label: '「COLOR OUTSIDE THE LINES」 CORTIS',
+    value: 11036,
+  },
+  {
+    label: '「Letters」 青木陽菜',
+    value: 8843,
+  },
+  {
+    label: '「Prema」 藤井風',
+    value: 7909,
+  },
+];
+
+// X軸のスケール（数値を幅に変換）
+const xScale = d3
+	.scaleLinear()
+	.domain([0, d3.max(dataset, (d) => d.value)]) // 0からデータの最大値まで
+	.range([0, 500 - 100]); // 幅を500pxからラベル分引いた値まで
+
+      const svg = d3
+	.select('#chart')
+	.append('svg')
+	.attr('viewBox', '0 0 500 300');
+
+    // image要素の追加
+svg
+  .selectAll('image')
+  .data(dataset)
+  .join('image')
+  .attr('href', (d) => d.url)
+  .attr('x', 0)
+  .attr('y', (d, i) => i * 30)
+  .attr('width', 30);
+
+svg
+	.selectAll('rect')
+	.data(dataset)
+	.join('rect')
+	.attr('x', 40)
+	.attr('y', (d, i) => i * 30 + 10)
+	.attr('width', (d) => xScale(d.value)) // スケールを適用
+    .attr('height', 10)
+	.attr('fill', '#ffff00');
+
+//クラス名で取得
+svg
+	.selectAll('.label')
+	.data(dataset)
+	.join('text')
+	.classed('label', true) //クラス名を追加
+	.attr('font-size', '10')
+	.attr('x', (d) => 40)
+	.attr('y', (d, i) => i * 30 + 10)
+	.text((d, i) => `${i + 1}位：${d.label}`); // 順位を追加
+
+    //クラス名で取得
+svg
+	.selectAll('.value')
+	.data(dataset)
+	.join('text')
+	.classed('value', true) //クラス名を追加
+	.attr('font-size', '8')
+	.attr('x', (d) => xScale(d.value) + 40) // スケールを適用
+    .attr('y', (d, i) => i * 30 + 20)
+	.text((d) => `${d.value}枚`); // 単位を追加
+    </script>
+  </body>
+</html>

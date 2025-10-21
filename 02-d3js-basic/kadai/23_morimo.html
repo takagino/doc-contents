@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>かわいい動物ランキング</title>
+    <style>
+      #chart svg {
+        display: block;
+        width: 80%;
+        height: auto;
+        margin: 0 auto;
+        background-color: #eee;
+      }
+
+      h1 {
+        text-align: center;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>かわいい動物ランキング</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: "シマエナガ",
+          value: 88.9,
+          url: "https://m.media-amazon.com/images/I/61J4YfaeTtL._AC_SY879_CR102,233,418,418.jpg",
+        },
+        {
+          label: "オコジョ",
+          value: 84.3,
+          url: "https://img.ranking.net/uploads/item/image/6b/cb/7b/default_cropped_shutterstock_768503443.jpg?v=1600160565",
+        },
+        {
+          label: "レッサーパンダ",
+          value: 83.3,
+          url: "https://img.ranking.net/uploads/item/image/1a/48/73/default_cropped_shutterstock_70141255.jpg?v=1600160564",
+        },
+        {
+          label: "ハリネズミ",
+          value: 81.0,
+          url: "https://img.ranking.net/uploads/item/image/63/1b/17/default_cropped_shutterstock_65206177.jpg?v=1666773743",
+        },
+        {
+          label: "ネコ",
+          value: 80.6,
+          url: "https://img.ranking.net/uploads/item/image/5f/6f/06/default_cropped_shutterstock_259485995.png?v=1614844173",
+        },
+      ];
+
+      const yScale = d3.scaleLinear().domain([70, 100]).range([250, 50]);
+
+      const xScale = d3
+        .scaleBand()
+        .domain(dataset.map((d) => d.label))
+        .range([50, 450])
+        .padding(0.3);
+
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("viewBox", "0 0 500 300");
+
+      svg
+        .selectAll("image")
+        .data(dataset)
+        .join("image")
+        .attr("href", (d) => d.url)
+        .attr("x", (d) => xScale(d.label) + (xScale.bandwidth() - 40) / 2)
+        .attr("y", (d) => yScale(d.value) - 40 - 5)
+        .attr("width", 40)
+        .attr("height", 40);
+
+      svg
+        .selectAll("rect")
+        .data(dataset)
+        .join("rect")
+        .attr("x", (d) => xScale(d.label))
+        .attr("y", (d) => yScale(d.value))
+        .attr("width", xScale.bandwidth())
+        .attr("height", (d) => 250 - yScale(d.value))
+        .attr("fill", "#87cefa");
+
+      svg
+        .selectAll(".label")
+        .data(dataset)
+        .join("text")
+        .classed("label", true)
+        .attr("font-size", "7")
+        .attr("x", (d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .attr("y", 250 + 15)
+        .attr("text-anchor", "middle")
+        .text((d, i) => `${i + 1}位：${d.label}`);
+
+      svg
+        .selectAll(".value")
+        .data(dataset)
+        .join("text")
+        .classed("value", true)
+        .attr("font-size", "8")
+        .attr("x", (d) => xScale(d.label) + xScale.bandwidth() / 2)
+        .attr("y", (d) => yScale(d.value) + (250 - yScale(d.value)) / 2 + 3)
+        .attr("text-anchor", "middle")
+        .text((d) => `${d.value}点`);
+    </script>
+  </body>
+</html>

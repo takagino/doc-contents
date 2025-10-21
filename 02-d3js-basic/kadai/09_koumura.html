@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bree+Serif&family=Dela+Gothic+One&family=DotGothic16&family=Kaisei+Decol&family=Kaisei+Opti&family=Lora:ital,wght@0,400..700;1,400..700&family=Moirai+One&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@300;400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <title>SixTONESシングル初週売り上げTOP6</title>
+    <style>
+      body {
+        font-family: "Zen Maru Gothic", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+        background-color: #fffef2;
+      }
+
+      h1 {
+        margin: 20px 0;
+        color: #f3aecc;
+        text-align: center;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <h1>SixTONESシングル初週売り上げTOP6</h1>
+    <div id="chart"></div>
+
+    <script>
+      const dataset = [
+        {
+          label: "Imitation Rain/D.D.",
+          value: 132.8,
+          color: "#ed7762",
+          url: "https://m.media-amazon.com/images/I/61dvhi4x5RL._UF1000,1000_QL80_.jpg",
+        },
+        {
+          label: "NAVIGATOR",
+          value: 62.2,
+          color: "#f3aecc",
+          url: "https://www.sixtones.jp/assets/images/discography/secj-10.jpg",
+        },
+        {
+          label: "音色",
+          value: 52.3,
+          color: "#3e3a39",
+          url: "https://m.media-amazon.com/images/I/91YSRY-4MYL.jpg",
+        },
+        {
+          label: "マスカラ",
+          value: 49.6,
+          color: "#ffe57f",
+          url: "https://m.media-amazon.com/images/I/71gOoGCfeES._UF1000,1000_QL80_.jpg",
+        },
+        {
+          label: "こっから",
+          value: 49.5,
+          color: "#93cb86",
+          url: "https://m.media-amazon.com/images/I/81FeCxyyuXL.jpg",
+        },
+        {
+          label: "CREAK",
+          value: 47.5,
+          color: "#91bee6",
+          url: "https://www.sixtones.jp/assets/images/discography/secj-78.jpg",
+        },
+      ];
+
+      const xScale = d3
+        .scaleLinear()
+        .domain([0, 158])
+        .range([0, 500 - 100]);
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("viewBox", "0 0 500 300");
+
+      svg
+        .selectAll("image")
+        .data(dataset)
+        .join("image")
+        .attr("href", (d) => d.url)
+        .attr("x", 0)
+        .attr("y", (d, i) => i * 50)
+        .attr("width", 30);
+
+      svg
+        .selectAll("rect")
+        .data(dataset)
+        .join("rect")
+        .attr("x", 40)
+        .attr("y", (d, i) => i * 50 + 15)
+        .attr("width", (d) => xScale(d.value))
+        .attr("height", 10)
+        .attr("fill", (d) => d.color);
+
+      svg
+        .selectAll(".label")
+        .data(dataset)
+        .join("text")
+        .classed("label", true)
+        .attr("font-size", "10")
+        .attr("x", (d) => 40)
+        .attr("y", (d, i) => i * 50 + 10)
+        .attr("fill", "#381e0a")
+        .text((d, i) => `${i + 1}位:${d.label}`);
+
+      svg
+        .selectAll(".value")
+        .data(dataset)
+        .join("text")
+        .classed("value", true)
+        .attr("font-size", "8")
+        .attr("x", (d) => xScale(d.value) + 45)
+        .attr("y", (d, i) => i * 50 + 23)
+        .attr("fill", "#381e0a")
+        .text((d) => `${d.value}万枚`);
+    </script>
+  </body>
+</html>
