@@ -1,0 +1,68 @@
+{
+  "year2023": [
+    {
+      "label": "A",
+      "color": "#a8d8ea",
+      "val": 55
+    },
+    {
+      "label": "B",
+      "color": "#aa96da",
+      "val": 20
+    },
+    {
+      "label": "C",
+      "color": "#fcbad3",
+      "val": 75
+    },
+    {
+      "label": "D",
+      "color": "#ffffd2",
+      "val": 45
+    }
+  ],
+  "year2024": [
+    {
+      "label": "E",
+      "color": "#f67280",
+      "val": 30
+    },
+    {
+      "label": "F",
+      "color": "#c06c84",
+      "val": 85
+    },
+    {
+      "label": "G",
+      "color": "#6c5b7b",
+      "val": 60
+    },
+    {
+      "label": "H",
+      "color": "#355c7d",
+      "val": 25
+    }
+  ],
+  "year2025": [
+    {
+      "label": "I",
+      "color": "#ffdab9",
+      "val": 40
+    },
+    {
+      "label": "J",
+      "color": "#e6e6fa",
+      "val": 95
+    },
+    {
+      "label": "K",
+      "color": "#dda0dd",
+      "val": 70
+    },
+    {
+      "label": "L",
+      "color": "#b0e0e6",
+      "val": 35
+    }
+  ]
+}
