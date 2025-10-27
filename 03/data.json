@@ -1,6 +1,26 @@
 [
-  { "label": "A", "color": "#f00", "val24": 30, "val25": 40 },
-  { "label": "B", "color": "#0f0", "val24": 85, "val25": 95 },
-  { "label": "C", "color": "#00f", "val24": 60, "val25": 70 },
-  { "label": "D", "color": "#0ff", "val24": 25, "val25": 35 }
+  {
+    "label": "A",
+    "color": "#f00",
+    "val24": 30,
+    "val25": 40
+  },
+  {
+    "label": "B",
+    "color": "#0f0",
+    "val24": 85,
+    "val25": 95
+  },
+  {
+    "label": "C",
+    "color": "#00f",
+    "val24": 60,
+    "val25": 70
+  },
+  {
+    "label": "D",
+    "color": "#0ff",
+    "val24": 25,
+    "val25": 35
+  }
 ]

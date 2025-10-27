@@ -1,14 +1,46 @@
 {
   "year2024": [
-    { "label": "A", "color": "#f00", "val": 30 },
-    { "label": "B", "color": "#0f0", "val": 85 },
-    { "label": "C", "color": "#00f", "val": 60 },
-    { "label": "D", "color": "#0ff", "val": 25 }
+    {
+      "label": "A",
+      "color": "#f00",
+      "val": 30
+    },
+    {
+      "label": "B",
+      "color": "#0f0",
+      "val": 85
+    },
+    {
+      "label": "C",
+      "color": "#00f",
+      "val": 60
+    },
+    {
+      "label": "D",
+      "color": "#0ff",
+      "val": 25
+    }
   ],
   "year2025": [
-    { "label": "E", "color": "#f00", "val": 40 },
-    { "label": "C", "color": "#0f0", "val": 95 },
-    { "label": "G", "color": "#00f", "val": 70 },
-    { "label": "H", "color": "#0ff", "val": 35 }
+    {
+      "label": "E",
+      "color": "#f00",
+      "val": 40
+    },
+    {
+      "label": "C",
+      "color": "#0f0",
+      "val": 95
+    },
+    {
+      "label": "G",
+      "color": "#00f",
+      "val": 70
+    },
+    {
+      "label": "H",
+      "color": "#0ff",
+      "val": 35
+    }
   ]
 }
