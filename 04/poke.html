@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>PokeAPI Stats Chart</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    #chart svg {
+      width: 100%;
+      height: auto;
+      max-width: 600px;
+      /* 最大幅を設定 */
+      background-color: #f0f0f0;
+    }
+
+    /* 棒グラフのスタイル (任意) */
+    .bar {
+      fill: steelblue;
+    }
+
+    /* 軸のスタイル (任意) */
+    .axis path,
+    .axis line {
+      stroke: #ccc;
+    }
+
+    .axis text {
+      fill: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>ポケモン種族値グラフ</h1>
+  <div>
+    <label for="pokemonName">ポケモン名 (英語 or ID): </label>
+    <input type="text" id="pokemonName" value="pikachu">
+    <button id="searchButton">表示</button>
+  </div>
+  <div id="chart"></div>
+
+  <script>
+    // --- DOM要素の取得 ---
+    const inputElement = document.getElementById('pokemonName');
+    const searchButton = document.getElementById('searchButton');
+    const chartDiv = d3.select("#chart"); // D3でグラフ描画エリアを選択
+
+    // --- D3グラフ設定 ---
+    const width = 600; // SVGの内部座標系の幅
+    const height = 300; // SVGの内部座標系の高さ
+    const margin = { top: 20, right: 30, bottom: 40, left: 90 }; // グラフの余白
+    const innerWidth = width - margin.left - margin.right; // グラフ本体の幅
+    const innerHeight = height - margin.top - margin.bottom; // グラフ本体の高さ
+
+    // --- SVG要素の準備 (初回のみ) ---
+    const svg = chartDiv.append("svg")
+      .attr("viewBox", `0 0 ${width} ${height}`);
+
+    // グラフ本体を描画する<g>要素 (マージン分移動)
+    const innerChart = svg.append("g")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    // X軸を描画するための<g>要素 (グラフ下部に配置)
+    const xAxisG = innerChart.append("g")
+      .attr("transform", `translate(0, ${innerHeight})`);
+
+    // Y軸を描画するための<g>要素
+    const yAxisG = innerChart.append("g");
+
+    // --- スケールの準備 (ドメインは後で設定) ---
+    // X軸スケール (種族値を棒の長さに変換)
+    const xScale = d3.scaleLinear()
+      .range([0, innerWidth]);
+
+    // Y軸スケール (能力名を等間隔に配置)
+    const yScale = d3.scaleBand()
+      .range([0, innerHeight])
+      .padding(0.1); // 棒グラフ間の余白
+
+    // --- グラフ更新関数 ---
+    const drawChart = (statsData) => {
+      // スケールのドメイン（入力範囲）を設定
+      const maxValue = d3.max(statsData, d => d.value); // データ中の最大値
+      xScale.domain([0, maxValue]);
+      yScale.domain(statsData.map(d => d.name)); // 能力名の配列 ["hp", "attack", ...]
+
+      // 軸の描画/更新
+      const xAxis = d3.axisBottom(xScale).ticks(5); // 目盛りを5つ程度に
+      xAxisG.transition().duration(500).call(xAxis); // アニメーション付きで軸を描画
+
+      const yAxis = d3.axisLeft(yScale);
+      yAxisG.transition().duration(500).call(yAxis);
+
+      // データと<rect>要素 (棒グラフ) を紐付け
+      innerChart.selectAll(".bar")
+        .data(statsData, d => d.name) // ★ キー関数に能力名を使用
+        .join(
+          enter => enter.append("rect") // Enter: 新しい棒を追加
+            .attr("class", "bar")
+            .attr("y", d => yScale(d.name)) // Y座標
+            .attr("height", yScale.bandwidth()) // 棒の高さ
+            .attr("width", 0), // ★ 初期幅は0
+          update => update, // Update: 既存の棒を選択
+          exit => exit.remove() // Exit: 不要な棒を削除
+        )
+        .transition() // アニメーション開始
+        .duration(1000) // 1秒かける
+        .attr("y", d => yScale(d.name)) // Y座標 (データ順が変わる場合に備えて再設定)
+        .attr("height", yScale.bandwidth())
+        .attr("width", d => xScale(d.value)); // ★ 幅をデータ値に合わせて更新
+    };
+
+    // --- API呼び出し関数 ---
+    async function fetchPokemonData(pokemonName) {
+      const apiUrl = `https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`; // 小文字に変換
+
+      try {
+        chartDiv.text("読み込み中..."); // ローディング表示
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`ポケモン "${pokemonName}" が見つかりません (${response.status})`);
+        }
+        const data = await response.json();
+
+        // stats配列から必要なデータを抽出・整形
+        const statsData = data.stats.map(statInfo => ({
+          name: statInfo.stat.name, // 能力名 (例: "hp")
+          value: statInfo.base_stat // 種族値 (例: 45)
+        }));
+
+        chartDiv.text(""); // ローディング表示を消去
+        console.log(statsData);
+        drawChart(statsData); // 取得したデータでグラフ描画関数を呼び出す
+
+      } catch (error) {
+        console.error('APIエラー:', error);
+        chartDiv.text(`エラー: ${error.message}`); // エラーメッセージを表示
+      }
+    }
+
+    // --- イベントリスナー ---
+    searchButton.addEventListener('click', () => {
+      const pokemonName = inputElement.value;
+      if (pokemonName) {
+        fetchPokemonData(pokemonName);
+      }
+    });
+
+    // --- 初期表示 ---
+    fetchPokemonData('pikachu'); // 最初にピカチュウのデータを表示
+  </script>
+</body>
+</html>

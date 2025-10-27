@@ -25,6 +25,14 @@
   <div id="chart"></div>
 
   <script>
+    fetch('https://pokeapi.co/api/v2/pokemon/pikachu')
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+      })
+      .catch(error => console.error(`Error: ${error}`))
+      .finally(() => console.log('Finished!'));
+
     const initData = "year2023"; // 初期表示のデータセットキー
 
     /* --- グラフ初期化・描画関数 --- */
@@ -105,16 +113,16 @@
 
         // ラベル (text.label) の更新
         g.select('.label')
-          .text(d => d.label)
+          .text(d => d.label);
+
+        // 値 (text.value) の更新
+        g.select('.value')
+          .text(d => d.val)
           .transition()
           .duration(500)
           .delay(300)
           .ease(d3.easeLinear)
           .attr('x', (d) => xScale(d.val));
-
-        // 値 (text.value) の更新
-        g.select('.value')
-          .text(d => d.val)
       };
 
       /* --- イベントリスナーの設定 --- */
