@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5.js</title>
+    <style>
+      canvas {
+        background: #ddd;
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+    <script>
+      const size = 20;
+      let seed = 99; // ランダムの種（シード値）を保存する変数
+
+      function setup() {
+        createCanvas(640, 480);
+        colorMode(HSL);
+        rectMode(CENTER);
+        noStroke();
+      }
+
+      function draw() {
+        background(0, 0, 10);
+        randomSeed(seed); // ★ 毎フレーム、ランダム性を同じパターンにリセット
+
+        for (let y = 0; y < height; y += size) {
+          for (let x = 0; x < width; x += size) {
+            let distance = dist(x + size / 2, y + size / 2, mouseX, mouseY);
+
+            // マウスとの距離から円の直径を計算
+            let calculatedDiameter = distance * 0.1;
+
+            // --- ★ ここを修正 ---
+            // constrain(値, 最小値, 最大値) を使って、直径が 0 より小さくならず、
+            // 20 より大きくならないように制限する。
+            let diameter = constrain(calculatedDiameter, 0, 20);
+
+            // --- もしくは Math.min() でも可 ---
+            // let diameter = Math.min(calculatedDiameter, 20); // 最小値を気にしない場合
+
+            // 毎回同じランダムな色相が選ばれる
+            fill(random(360), 80, 70);
+            ellipse(x + size / 2, y + size / 2, diameter, diameter);
+          }
+        }
+      }
+
+      // マウスが離されたら、シード値を新しいランダムな値に変更
+      function mouseReleased() {
+        seed = random(99999);
+      }
+    </script>
+  </body>
+</html>
