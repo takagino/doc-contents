@@ -23,10 +23,12 @@
       // 矩形の基本サイズ
       const rectSize = 30;
 
+      // --- 1. 音声ファイルの読み込み ---
       function preload() {
-        mySound = loadSound('Burgundy.mp3');
+        mySound = loadSound('groove.mp3');
       }
 
+      // --- 2. 初期設定 ---
       function setup() {
         createCanvas(640, 480);
         colorMode(HSL);
@@ -41,42 +43,40 @@
         // 2重のforループで格子状にインスタンスを生成
         for (let y = 0; y < height; y += gridSize) {
           for (let x = 0; x < width; x += gridSize) {
-            // 16x12 = 192個のインスタンスが生成される
+            // 各グリッドの中心座標に、Rotatorインスタンスを生成
             let r = new Rotator(x + gridSize / 2, y + gridSize / 2, rectSize);
+            // 配列に追加
             rotators.push(r);
           }
         }
-        // console.log(rotators.length); // 192個 (640/40 * 480/40)
       }
 
+      // --- 3. 毎フレームの描画 ---
       function draw() {
         background(0, 0, 100); // 毎フレーム白で塗りつぶす
 
         if (mySound.isPlaying()) {
-          // --- 音声データの取得 ---
-          // 1024個の周波数データ(0〜255)の配列を取得
+          // 周波数スペクトル（1024個の0〜255の値）を取得
           let spectrum = fft.analyze();
 
-          // --- 192個のインスタンスを、192個の異なる周波数データで更新 ---
+          // 配列内のすべてのインスタンスに対して処理を実行
           for (let i = 0; i < rotators.length; i++) {
-            // ★ インスタンスの番号(i: 0〜191)を、
-            // ★ spectrumのインデックス(0〜1023)にマッピングする
-            // これにより、192個のインスタンスが低音域から高音域までを分担して参照する
+            // ★ 各インスタンスに対応する周波数帯の音量を取得
+            // インスタンスの番号(i)を、スペクトルのインデックス(0〜1023)にマッピング
             let spectrumIndex = floor(
               map(i, 0, rotators.length, 0, spectrum.length)
             );
+            let amplitude = spectrum[spectrumIndex]; // 0〜255の音量
 
-            // 対応する周波数帯の音量(0〜255)を取得
-            let amplitude = spectrum[spectrumIndex];
-
-            // 各インスタンスに、それぞれ異なる音量データを渡して更新
-            rotators[i].update(amplitude);
+            rotators[i].update(amplitude); // ★ 音量データを渡して更新
             rotators[i].draw();
           }
         }
       }
 
+      // --- 4. ユーザー操作 ---
       function mousePressed() {
+        // クリックで再生/停止を切り替え
         if (mySound.isPlaying()) {
           mySound.pause();
         } else {
@@ -89,26 +89,28 @@
         constructor(startX, startY, baseSize) {
           this.x = startX;
           this.y = startY;
-          this.currentSize = baseSize; // 現在のサイズ
+          this.baseSize = baseSize; // ★ 基本サイズとして保存
+          this.currentSize = baseSize; // ★ 音量で変化する現在のサイズ
           this.angle = 0;
-          this.noiseOffset = random(1000);
+          this.noiseOffset = random(1000); // ★ 各インスタンス固有のノイズ開始点
         }
 
-        // ★ 引数として、対応する周波数帯の音量(amplitude)を受け取る
+        // ★ updateメソッドで音量データ(amplitude)を受け取る
         update(amplitude) {
-          // 角度はノイズで更新
+          // 1. 角度の更新
           this.noiseOffset += 0.005;
           this.angle = noise(this.noiseOffset) * 360;
 
-          // ★ 大きさを、受け取った音量(0〜255)に基づいて更新
-          this.currentSize = map(amplitude, 0, 255, 5, gridSize * 1.5); // 5pxからマスの1.5倍まで変化
+          // 2. 大きさの更新
+          // 音量(0〜255)を、5pxからマスの1.5倍のサイズにマッピング
+          this.currentSize = map(amplitude, 0, 255, 5, gridSize * 1.5);
         }
 
         draw() {
           push();
           translate(this.x, this.y);
           rotate(this.angle);
-          rect(0, 0, this.currentSize, this.currentSize);
+          rect(0, 0, this.currentSize, this.currentSize); // ★ currentSizeで描画
           pop();
         }
       }

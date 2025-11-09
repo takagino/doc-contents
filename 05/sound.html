@@ -30,7 +30,7 @@
         colorMode(HSL);
         rectMode(CENTER);
         angleMode(DEGREES);
-        noStroke(); // ★ noStroke() は setup() に移動
+        noStroke();
 
         // FFTオブジェクトを作成
         fft = new p5.FFT();
@@ -43,7 +43,7 @@
 
       // --- 3. 毎フレームの描画 ---
       function draw() {
-        background(0, 0, 10, 0.1); // ★ background() は HSL/Alpha に合わせる
+        background(0, 0.1);
 
         if (mySound.isPlaying()) {
           // 周波数スペクトル（1024個の0〜255の値）を取得
@@ -64,7 +64,7 @@
 
       // --- 4. ユーザー操作 ---
       function mousePressed() {
-        // ★ 音の再生/停止は mousePressed() で行う (ブラウザポリシー対策)
+        // クリックで再生/停止を切り替え
         if (mySound.isPlaying()) {
           mySound.pause();
         } else {
@@ -79,12 +79,11 @@
 
       // --- Ballクラス（設計図）の定義 ---
       class Ball {
-        // ★ 元のコンストラクタの引数を活用
         constructor(
-          startX = random(width), // ★ デフォルト値を画面内のランダムな位置に
+          startX = random(width),
           startY = random(height),
           size = random(10, 30),
-          color = [random(360), 80, 70, 0.7] // ★ 透明度を 0.7 に
+          color = [random(360), 80, 70, 0.7]
         ) {
           this.x = startX;
           this.y = startY;
