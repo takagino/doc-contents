@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5.sound.js</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/addons/p5.sound.js"></script>
+    <script>
+      let mySound;
+      let fft;
+
+      let balls = [];
+      const NUM_BALLS = 10; // ★ 初期のボール数
+
+      // --- 1. 音声ファイルの読み込み ---
+      function preload() {
+        mySound = loadSound('groove.mp3');
+      }
+
+      // --- 2. 初期設定 ---
+      function setup() {
+        createCanvas(640, 480);
+        colorMode(HSL);
+        rectMode(CENTER);
+        angleMode(DEGREES);
+        noStroke(); // ★ noStroke() は setup() に移動
+
+        // FFTオブジェクトを作成
+        fft = new p5.FFT();
+
+        // 最初に10個のBallインスタンスを生成
+        for (let i = 0; i < NUM_BALLS; i++) {
+          balls.push(new Ball());
+        }
+      }
+
+      // --- 3. 毎フレームの描画 ---
+      function draw() {
+        background(0, 0, 10, 0.1); // ★ background() は HSL/Alpha に合わせる
+
+        if (mySound.isPlaying()) {
+          // 周波数スペクトル（1024個の0〜255の値）を取得
+          let spectrum = fft.analyze();
+
+          // 配列内のすべてのボールに対して処理を実行
+          for (let i = 0; i < balls.length; i++) {
+            // ★ 各ボールに対応する周波数帯の音量を取得
+            // ボールのインデックス(i)を、スペクトルのインデックス(0〜1023)にマッピング
+            // (低〜中音域の 0〜512 にマッピングすると反応が良い)
+            let spectrumIndex = floor(map(i, 0, balls.length, 0, 512));
+
+            balls[i].update(spectrum[spectrumIndex]); // ★ 音量データを渡して更新
+            balls[i].draw();
+          }
+        }
+      }
+
+      // --- 4. ユーザー操作 ---
+      function mousePressed() {
+        // ★ 音の再生/停止は mousePressed() で行う (ブラウザポリシー対策)
+        if (mySound.isPlaying()) {
+          mySound.pause();
+        } else {
+          mySound.loop();
+        }
+      }
+
+      // ★ クリックでボールを追加する機能はそのまま残す
+      function mouseReleased() {
+        balls.push(new Ball());
+      }
+
+      // --- Ballクラス（設計図）の定義 ---
+      class Ball {
+        // ★ 元のコンストラクタの引数を活用
+        constructor(
+          startX = random(width), // ★ デフォルト値を画面内のランダムな位置に
+          startY = random(height),
+          size = random(10, 30),
+          color = [random(360), 80, 70, 0.7] // ★ 透明度を 0.7 に
+        ) {
+          this.x = startX;
+          this.y = startY;
+          this.baseSize = size; // ★ 基本サイズとして保存
+          this.currentSize = this.baseSize; // ★ 音量で変化する現在のサイズ
+          this.color = color;
+          this.xOffset = random(0, 1000);
+          this.yOffset = random(1000, 2000);
+        }
+
+        // ★ updateメソッドで音量データ(amplitude)を受け取る
+        update(amplitude) {
+          // 1. 動きの更新 (元のコードと同じ絶対位置指定)
+          this.x = noise(this.xOffset) * width;
+          this.y = noise(this.yOffset) * height;
+
+          this.xOffset += 0.005;
+          this.yOffset += 0.005;
+
+          // 2. 大きさの更新
+          // 音量(0〜255)を、基本サイズからの加算値(0〜100px)にマッピング
+          let sizeIncrease = map(amplitude, 0, 255, 0, 100);
+          this.currentSize = this.baseSize + sizeIncrease;
+        }
+
+        draw() {
+          fill(this.color);
+          ellipse(this.x, this.y, this.currentSize, this.currentSize); // ★ currentSizeで描画
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5.sound.js</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/addons/p5.sound.js"></script>
+    <script>
+      let mySound;
+      let fft;
+
+      // インスタンスを格納するための配列
+      let rotators = [];
+      // グリッドの1マスのサイズ
+      const gridSize = 40;
+      // 矩形の基本サイズ
+      const rectSize = 30;
+
+      function preload() {
+        mySound = loadSound('Burgundy.mp3');
+      }
+
+      function setup() {
+        createCanvas(640, 480);
+        colorMode(HSL);
+        rectMode(CENTER);
+        angleMode(DEGREES);
+        fill(0, 80, 70, 0.6);
+        noStroke();
+
+        // FFTオブジェクトを作成
+        fft = new p5.FFT();
+
+        // 2重のforループで格子状にインスタンスを生成
+        for (let y = 0; y < height; y += gridSize) {
+          for (let x = 0; x < width; x += gridSize) {
+            // 16x12 = 192個のインスタンスが生成される
+            let r = new Rotator(x + gridSize / 2, y + gridSize / 2, rectSize);
+            rotators.push(r);
+          }
+        }
+        // console.log(rotators.length); // 192個 (640/40 * 480/40)
+      }
+
+      function draw() {
+        background(0, 0, 100); // 毎フレーム白で塗りつぶす
+
+        if (mySound.isPlaying()) {
+          // --- 音声データの取得 ---
+          // 1024個の周波数データ(0〜255)の配列を取得
+          let spectrum = fft.analyze();
+
+          // --- 192個のインスタンスを、192個の異なる周波数データで更新 ---
+          for (let i = 0; i < rotators.length; i++) {
+            // ★ インスタンスの番号(i: 0〜191)を、
+            // ★ spectrumのインデックス(0〜1023)にマッピングする
+            // これにより、192個のインスタンスが低音域から高音域までを分担して参照する
+            let spectrumIndex = floor(
+              map(i, 0, rotators.length, 0, spectrum.length)
+            );
+
+            // 対応する周波数帯の音量(0〜255)を取得
+            let amplitude = spectrum[spectrumIndex];
+
+            // 各インスタンスに、それぞれ異なる音量データを渡して更新
+            rotators[i].update(amplitude);
+            rotators[i].draw();
+          }
+        }
+      }
+
+      function mousePressed() {
+        if (mySound.isPlaying()) {
+          mySound.pause();
+        } else {
+          mySound.loop();
+        }
+      }
+
+      // --- Rotatorクラス（設計図）の定義 ---
+      class Rotator {
+        constructor(startX, startY, baseSize) {
+          this.x = startX;
+          this.y = startY;
+          this.currentSize = baseSize; // 現在のサイズ
+          this.angle = 0;
+          this.noiseOffset = random(1000);
+        }
+
+        // ★ 引数として、対応する周波数帯の音量(amplitude)を受け取る
+        update(amplitude) {
+          // 角度はノイズで更新
+          this.noiseOffset += 0.005;
+          this.angle = noise(this.noiseOffset) * 360;
+
+          // ★ 大きさを、受け取った音量(0〜255)に基づいて更新
+          this.currentSize = map(amplitude, 0, 255, 5, gridSize * 1.5); // 5pxからマスの1.5倍まで変化
+        }
+
+        draw() {
+          push();
+          translate(this.x, this.y);
+          rotate(this.angle);
+          rect(0, 0, this.currentSize, this.currentSize);
+          pop();
+        }
+      }
+    </script>
+  </body>
+</html>
