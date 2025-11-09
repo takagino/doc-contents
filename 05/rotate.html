@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5.js</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+    <script>
+      // let n;
+
+      // function setup() {
+      //   createCanvas(640, 480);
+      //   colorMode(HSL);
+      //   rectMode(CENTER);
+      //   angleMode(DEGREES);
+      //   background(255);
+
+      //   n = random(1000);
+      // }
+
+      // function draw() {
+      //   background(255);
+      //   n += 0.005;
+
+      //   push();
+      //   translate(width / 2, height / 2);
+      //   rotate(noise(n) * 360);
+
+      //   rect(0, 0, 50, 50);
+      //   pop();
+      // }
+
+      // インスタンスを格納するための配列
+      let rotators = [];
+      // グリッドの1マスのサイズ
+      const gridSize = 40;
+      // 矩形の基本サイズ
+      const rectSize = 30;
+
+      function setup() {
+        createCanvas(640, 480);
+        colorMode(HSL); // HSLモード
+        rectMode(CENTER); // 矩形の基準点を中心に
+        angleMode(DEGREES); // 角度を度数法(0-360)に
+        fill(0, 80, 70, 0.6);
+        noStroke();
+
+        // 2重のforループで格子状にインスタンスを生成
+        for (let y = 0; y < height; y += gridSize) {
+          for (let x = 0; x < width; x += gridSize) {
+            // 各グリッドの中心座標に、Rotatorインスタンスを生成
+            let r = new Rotator(x + gridSize / 2, y + gridSize / 2, rectSize);
+            // 配列に追加
+            rotators.push(r);
+          }
+        }
+      }
+
+      function draw() {
+        background(0, 0, 100); // 毎フレーム白で塗りつぶす
+
+        // 配列内のすべてのインスタンスのメソッドを呼び出す
+        for (let rotator of rotators) {
+          rotator.update(); // 状態（角度）を更新
+          rotator.draw(); // 描画
+        }
+      }
+
+      // --- Rotatorクラス（設計図）の定義 ---
+      class Rotator {
+        // 1. コンストラクタ (初期設定)
+        constructor(startX, startY, size) {
+          // 2. プロパティ (インスタンスが持つ変数)
+          this.x = startX; // X座標
+          this.y = startY; // Y座標
+          this.size = size; // 大きさ
+          this.angle = 0; // 現在の角度
+          this.noiseOffset = random(1000); // ★ 各インスタンス固有のノイズ開始点
+        }
+
+        // 3. メソッド (振る舞い・関数)
+
+        // 状態を更新するメソッド
+        update() {
+          // ノイズの引数を少しずつ進める
+          this.noiseOffset += 0.01;
+          // ノイズの値(0〜1)を回転角度(0〜360)に変換
+          this.angle = noise(this.noiseOffset) * 360;
+        }
+
+        // 描画するメソッド
+        draw() {
+          push();
+          translate(this.x, this.y); // このインスタンスの位置に移動
+          rotate(this.angle); // このインスタンスの角度で回転
+          rect(0, 0, this.size, this.size); // 原点(0,0)に描画
+          pop();
+        }
+      }
+    </script>
+  </body>
+</html>

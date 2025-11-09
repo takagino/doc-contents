@@ -12,8 +12,8 @@
   <body>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
     <script>
-      let balls = []; // 複数のBallインスタンスを格納する配列
-      const NUM_BALLS = 10; // 生成するボールの数
+      let balls = [];
+      const NUM_BALLS = 10;
 
       function setup() {
         createCanvas(640, 480);
@@ -23,19 +23,17 @@
         fill(0, 80, 70);
         noStroke();
 
-        // 指定した数だけBallインスタンスを生成し、配列に追加
         for (let i = 0; i < NUM_BALLS; i++) {
           balls.push(new Ball());
         }
       }
 
       function draw() {
-        background(0, 0.1); // 残像効果
+        background(0, 0.1);
 
-        // 配列内のすべてのボールに対して処理を実行
         for (let ball of balls) {
-          ball.update(); // 座標を更新
-          ball.draw(); // 描画
+          ball.update();
+          ball.draw();
         }
       }
 
@@ -48,7 +46,7 @@
           startX = width / 2,
           startY = height / 2,
           size = random(10, 30),
-          color = [random(360), 80, 70]
+          color = [random(360), 80, 70, 0.1]
         ) {
           this.x = startX;
           this.y = startY;
