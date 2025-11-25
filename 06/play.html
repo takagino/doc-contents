@@ -17,7 +17,7 @@
     <!-- Version 3 of p5.play -->
     <script src="https://p5play.org/v3/p5play.js"></script>
     <script>
-      let player, floor;
+      let player, floor, smiley;
       let enemies;
       let isGameOver = false;
 
@@ -50,11 +50,13 @@
         player.rotationLock = true;
         // もし画像のサイズが大きすぎる場合は、ここで強制的に指定も可能
         player.scale = 0.1; // 10%の大きさに縮小
+        player.layer = 2;
 
         // --- 床 ---
         floor = new Sprite(320, 400, 500, 30);
         floor.color = '#666';
         floor.collider = 'static';
+        floor.layer = 1;
 
         // --- 敵グループ ---
         enemies = new Group();
@@ -65,6 +67,22 @@
         // enemies.color = '#f00';
         enemies.collider = 'kinematic';
         enemies.scale = 0.1;
+
+        let smileText = `
+..uuuuuu
+.uubuubuu
+uuuuuuuuuu
+uubuuuubuu
+.uubbbbuu
+..uuuuuu`;
+
+        let palette = {
+          u: color(60, 220, 255),
+          b: '#303060',
+        };
+
+        smiley = new Sprite();
+        smiley.img = spriteArt(smileText, 10, palette);
       }
 
       function draw() {
