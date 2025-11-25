@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>p5play</title>
+  <style>
+    canvas {
+      border: 1px solid #aaa;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+  <!-- planck -->
+  <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+  <!-- Version 3 of p5.play -->
+  <script src="https://p5play.org/v3/p5play.js"></script>
+  <script>
+    let box, circle, floor, wall, boxes;
+    let playerImg;
+
+    function preload() {
+      playerImg = loadImage("player.svg");
+    }
+
+    function setup() {
+      createCanvas(640, 480);
+      world.gravity.y = 10;
+
+      boxes = new Group();
+      boxes.w = 40;
+      boxes.h = 40;
+      boxes.color = '#0ff';
+      for (let i = 0; i < 10; i++) {
+        let box = new boxes.Sprite(random(width), random(height / 2));
+      }
+
+      boxes[0].color = '#f00';
+
+      circle = new Sprite(200, 150);
+      circle.image = playerImg;
+      circle.scale = 0.1;
+
+      wall = new Sprite(100, 0, 30, 400);
+
+      floor = new Sprite(320, 400, 500, 30);
+      floor.color = "#666";
+      floor.collider = "static";
+    }
+
+    function draw() {
+      background(255);
+
+      if (kb.pressing('right')) {
+        circle.vel.x = 5;
+      } else if (kb.pressing('left')) {
+        circle.vel.x = -5;
+      } else {
+        circle.vel.x = 0;
+      }
+
+      if (kb.presses('up') && circle.colliding(floor)) {
+        circle.vel.y = -5;
+      }
+    }
+  </script>
+</body>
+</html>
