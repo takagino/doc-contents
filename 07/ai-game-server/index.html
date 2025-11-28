@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <input type="text" id="promptInput" placeholder="例: 月面のような世界" />
+      <button id="sendButton">世界を変える</button>
+    </div>
+    <!-- p5.js -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+      // 初期パラメータ
+      let gameParams = {
+        gravity: 10,
+        enemySpeed: 5,
+      };
+
+      function setup() {
+        new Canvas(640, 480);
+        world.gravity.y = gameParams.gravity;
+
+        // ... (スプライト生成などは省略) ...
+
+        // ボタン設定
+        const btn = document.getElementById('sendButton');
+        const input = document.getElementById('promptInput');
+
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.innerText = '生成中...';
+
+          // ★ 自分のPC内のサーバーに送る
+          try {
+            const res = await fetch('http://localhost:3000/gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: input.value }),
+            });
+
+            const data = await res.json();
+            const aiSetting = data.result;
+
+            // ★ AIの設定をゲームに反映！
+            world.gravity.y = aiSetting.gravity;
+            gameParams.enemySpeed = aiSetting.enemySpeed; // 敵生成時に使う変数
+
+            console.log('AIメッセージ:', aiSetting.message);
+          } catch (e) {
+            console.error(e);
+          } finally {
+            btn.disabled = false;
+            btn.innerText = '世界を変える';
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
