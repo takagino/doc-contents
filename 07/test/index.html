@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI名言ジェネレーター</title>
+  </head>
+  <body>
+    <h1>AI名言ジェネレーター</h1>
+    <p>好きな単語を入力してください（例：勇気、失敗、猫）</p>
+
+    <input type="text" id="wordInput" placeholder="単語を入力" />
+    <button id="sendButton">名言を探す</button>
+    <p><strong id="quoteResult">---</strong></p>
+
+    <script>
+      const btn = document.getElementById('sendButton');
+      const input = document.getElementById('wordInput');
+      const quoteResult = document.getElementById('quoteResult');
+
+      btn.addEventListener('click', async () => {
+        // 入力された単語を取得
+        const word = input.value;
+
+        // 入力チェック
+        if (!word) return;
+
+        // ボタンを無効化して状態を表示
+        btn.disabled = true;
+        btn.textContent = '検索中...';
+
+        try {
+          // サーバーにPOSTリクエストを送信
+          const response = await fetch('http://localhost:3000/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: word }),
+          });
+
+          // レスポンスをJSONとして取得
+          const data = await response.json();
+
+          // 結果を表示
+          quoteResult.textContent = data.result.quote;
+          btn.disabled = false;
+          btn.textContent = '名言を探す';
+        } catch (error) {
+          console.error('通信エラー:', error);
+          btn.disabled = false;
+          btn.textContent = '名言を探す';
+        }
+      });
+    </script>
+  </body>
+</html>
