@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>game</title>
+    <style>
+      canvas { border: 1px solid #aaa; }
+    </style>
+  </head>
+  <body>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+<script src="https://p5play.org/v3/p5play.js"></script>
+
+<script>
+let player, floor;
+let enemiesGround, enemiesAir;
+let bullets;
+let isGameOver = false;
+
+let playerImg, enemyImg;
+let lives = 3;
+
+// 背景
+let clouds = [];
+let treesBack = [];
+let treesFront = [];
+
+// バリア
+let barrierActive = false;
+let barrierCount = 3;
+let barrierTimer = 0;
+let barrierAngle = 0;
+
+function preload() {
+  playerImg = loadImage('elf.svg');
+  enemyImg = loadImage('dragon.svg');
+}
+
+function setup() {
+  createCanvas(640, 480);
+  world.gravity.y = 10;
+
+  // 背景生成
+  for (let i = 0; i < 5; i++) clouds.push({ x: random(width), y: random(50, 200), speed: random(0.2, 0.5) });
+  for (let i = 0; i < 6; i++) treesBack.push({ x: random(width), y: 360, size: random(60, 90) });
+  for (let i = 0; i < 5; i++) treesFront.push({ x: random(width), y: 380, size: random(90, 140) });
+
+  // 地面
+  floor = new Sprite(320, 400, 500, 30);
+  floor.color = '#666';
+  floor.collider = 'static';
+
+  // プレイヤー
+  player = new Sprite(100, 350);
+  player.image = playerImg;
+  player.rotationLock = true;
+  player.scale = 0.1;
+
+  // 敵
+  enemiesGround = new Group();
+  enemiesGround.image = enemyImg;
+  enemiesGround.collider = 'kinematic';
+  enemiesGround.scale = 0.08;
+
+  enemiesAir = new Group();
+  enemiesAir.image = enemyImg;
+  enemiesAir.collider = 'kinematic';
+  enemiesAir.scale = 0.08;
+
+  // 弾
+  bullets = new Group();
+  bullets.color = 'yellow';
+  bullets.collider = 'kinematic';
+}
+
+function draw() {
+  drawBackground();
+
+  if (isGameOver) {
+    fill(0);
+    textSize(50);
+    textAlign(CENTER);
+    text('GAME OVER', width/2, height/2);
+    return;
+  }
+
+  // プレイヤー操作
+  if (kb.pressing('right')) player.vel.x = 5;
+  else if (kb.pressing('left')) player.vel.x = -5;
+  else player.vel.x = 0;
+
+  if (kb.presses('up') && player.colliding(floor)) player.vel.y = -5;
+
+  // スペースで弾
+  if (kb.presses('space')) {
+    let bullet = new bullets.Sprite(player.x + 20, player.y - 10, 10);
+    bullet.vel.x = 10;
+    bullet.life = 60;
+  }
+
+  bullets.cull(50);
+
+  // 敵生成
+  if (frameCount % 120 === 0) {
+    let enemy = new enemiesGround.Sprite(width, 380);
+    enemy.vel.x = -5;
+  }
+  if (frameCount % 150 === 0) {
+    let enemy = new enemiesAir.Sprite(width, random(150,280));
+    enemy.vel.x = -7;
+  }
+
+  enemiesGround.cull(100);
+  enemiesAir.cull(100);
+
+  // 弾と敵の衝突
+  bullets.collides(enemiesGround, (b,e)=>{ b.remove(); e.remove(); });
+  bullets.collides(enemiesAir, (b,e)=>{ b.remove(); e.remove(); });
+
+  // プレイヤーと敵の衝突（ライフ制 & バリア判定）
+  if (!barrierActive) {
+    if (player.collides(enemiesGround) || player.collides(enemiesAir)) {
+        lives--;
+        player.tint = 'red';
+        setTimeout(()=>player.tint='white',300);
+        if(lives<=0) isGameOver=true;
+        // 衝突後少し位置を戻す
+        player.x = 100;
+        player.y = 350;
+    }
+  } else {
+    // バリア中は敵を押し返す
+    enemiesGround.forEach(e => {
+      if(player.overlaps(e)) e.vel.x = abs(e.vel.x);
+    });
+    enemiesAir.forEach(e => {
+      if(player.overlaps(e)) e.vel.x = abs(e.vel.x);
+    });
+  }
+
+  // バリア描画＆タイマー
+  if (barrierActive) {
+    barrierTimer--;
+    drawShield(player.x + player.width/2, player.y + player.height/2);
+    if (barrierTimer <= 0) barrierActive = false;
+  }
+
+  drawLives();
+
+  // バリア残回数表示
+  fill(0);
+  noStroke();
+  textSize(18);
+  textAlign(LEFT);
+  text('Barrier: '+barrierCount, 500, 30);
+}
+
+// シールド描画
+function drawShield(cx,cy){
+  noFill();
+  stroke(0,150,255,200);
+  strokeWeight(4);
+  let radius = 50 + 5*sin(barrierAngle);
+  ellipse(cx,cy,radius,radius);
+  barrierAngle+=0.2;
+  stroke(0,200,255,150);
+  ellipse(cx,cy,radius+10,radius+10);
+}
+
+// ライフ描画
+function drawLives(){
+  textSize(20);
+  fill(255,0,0);
+  textAlign(LEFT);
+  let hearts = '❤'.repeat(lives);
+  text(hearts,10,30);
+}
+
+// 背景描画
+function drawBackground(){
+  background(200,225,255);
+  noStroke();
+  fill(255,255,255,230);
+  for(let cloud of clouds){
+    ellipse(cloud.x,cloud.y,50,30);
+    ellipse(cloud.x+20,cloud.y+5,40,25);
+    ellipse(cloud.x-20,cloud.y+5,40,25);
+    cloud.x-=cloud.speed;
+    if(cloud.x<-50) cloud.x = width+50;
+  }
+  fill(60,80,50);
+  for(let tree of treesBack){
+    triangle(tree.x,tree.y-tree.size,tree.x-tree.size/2,tree.y,tree.x+tree.size/2,tree.y);
+  }
+  fill(90,130,80);
+  for(let tree of treesFront){
+    triangle(tree.x,tree.y-tree.size,tree.x-tree.size/2,tree.y,tree.x+tree.size/2,tree.y);
+  }
+}
+
+// バリアキー入力
+function keyPressed(){
+  if(keyCode===32 && barrierCount>0 && !barrierActive){
+    barrierActive=true;
+    barrierCount--;
+    barrierTimer=180; // 約3秒
+  }
+}
+</script>
+  </body>
+</html>

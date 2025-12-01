@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+        let player, floor;
+        let enemies;
+        let isGameOver = false;
+        let score = 0;
+        let highScore = 0;
+
+        let retryButton;
+
+        let playerImg;
+        let enemyImg;
+
+        function preload() {
+            playerImg = loadImage('image/character_tenshi_silver.svg');
+            enemyImg = loadImage('image/yurei_halloween_orange.svg');
+            bgImg = loadImage('image/night-sky1.jpg');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+
+            highScore = Number(localStorage.getItem("highScore")) || 0;
+
+            world.gravity.y = 10;
+
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.rotationLock = true;
+            player.scale = 0.1;
+            player.width = playerImg.width * player.scale * 0.8;
+            player.height = playerImg.height * player.scale;
+            player.bounciness = 0;
+
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#a0acfa';
+            floor.collider = 'static';
+            floor.bounciness = 0;
+
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = 'kinematic';
+            enemies.scale = 0.1;
+            enemies.width = enemyImg.width * 0.8;
+            enemies.height = enemyImg.height * 0.8;
+        }
+
+        function draw() {
+            background(bgImg);
+            textAlign(LEFT, BASELINE);
+
+            fill('#a0acfa');
+            textSize(24);
+            text("SCORE: " + score, 20, 30);
+            text("HI-SCORE: " + highScore, 20, 60);
+
+            if (isGameOver) {
+                fill('#a0acfa');
+                textSize(50);
+                textAlign(CENTER);
+                text('GAME OVER……', width / 2, height / 2);
+                fill(255);
+                textSize(30);
+                text('スペースキーでリトライ', width / 2, height / 2 + 30);
+
+                if (kb.presses('space')) {
+                    location.reload();
+                }
+                return;
+            }
+
+            if (kb.pressing('right')) {
+                player.vel.x = 3;
+            } else if (kb.pressing('left')) {
+                player.vel.x = -3;
+            } else {
+                player.vel.x = 0;
+            }
+
+            if (kb.presses('up') && player.colliding(floor)) {
+                player.vel.y = -5;
+            }
+
+            if (frameCount % 120 === 0) {
+                let enemy = new enemies.Sprite(width, 360);
+                enemy.vel.x = -(3 + random(5));
+            }
+
+            enemies.cull(100);
+
+            if (player.y > height + 50) {
+                isGameOver = true;
+                player.tint = '#666';
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("highScore", highScore);
+                }
+            }
+
+            if (player.collides(enemies)) {
+                isGameOver = true;
+                player.tint = '#666';
+
+                // ハイスコア更新処理
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("highScore", highScore);
+                }
+            }
+
+            for (let e of enemies) {
+                if (!e.scored && e.x < -50) {
+                    score++;
+                    e.scored = true;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

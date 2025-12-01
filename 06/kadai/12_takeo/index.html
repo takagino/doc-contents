@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>課題</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+        let player, floor;
+        let enemies;
+        let isGameOver = false;
+
+        let playerImg;
+        let enemyImg;
+        let bg;
+
+        let itemImages = [];
+        let items;
+
+        let tomatoImg;
+        let tomatoes;
+
+        let bakuhatsuImg;
+
+        // ライフ3
+        let life = 3;
+        let hitCooldown = 0;
+
+        // ★ライフ画像
+        let heartFull, heartEmpty;
+
+        // ★スコア機能
+        let score = 0;
+
+        // ★死因
+        let deathReason = "";
+
+        function preload() {
+            playerImg = loadImage('player.svg');
+            enemyImg = loadImage('enemy.svg');
+            bg = loadImage("background.jpg");
+
+            // ★ハート画像読み込み
+            heartFull = loadImage('heart_full.svg');   // ライフあり
+            heartEmpty = loadImage('heart_empty.svg'); // ライフなし
+
+            // ★3種類のお菓子アイテム画像
+            itemImages[0] = loadImage('item1.svg');
+            itemImages[1] = loadImage('item2.svg');
+            itemImages[2] = loadImage('item3.svg');
+
+            // ★食べると死ぬトマト画像
+            tomatoImg = loadImage('tomato.svg');
+
+            bakuhatsuImg = loadImage('bakuhatsu.svg');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 10;
+
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#666';
+            floor.collider = 'static';
+
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.rotationLock = true;
+            player.scale = 0.1;
+
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = 'none';
+            enemies.scale = 0.1;
+            enemies.w = 1;
+            enemies.h = 1;
+
+            // ★アイテムグループ
+            items = new Group();
+            items.collider = 'none';
+            items.scale = 0.1;
+
+            // ★トマトグループ
+            tomatoes = new Group();
+            tomatoes.collider = 'none';
+            tomatoes.scale = 0.1;
+        }
+
+        function draw() {
+            image(bg, 0, 0, width, height);
+
+            //=====================
+            //   スコア加算（生存時間）
+            //=====================
+            if (!isGameOver) {
+                score += 1; // 毎フレーム加算
+            }
+
+            //=========================
+            //   ライフUI (ハート画像 3つ)
+            //=========================
+            for (let i = 0; i < 3; i++) {
+                let x = 30 + i * 40; // ハートの位置(横並び)
+                let y = 30;
+
+                if (i < life) {
+                    image(heartFull, x, y, 32, 32);  // 残ってるライフ → ハート
+                } else {
+                    image(heartEmpty, x, y, 32, 32); // なくなったライフ → 空っぽ
+                }
+            }
+
+            //=========================
+            //   GAME OVER
+            //=========================
+            if (isGameOver) {
+
+                fill(0);
+                textSize(50);
+                textAlign(CENTER);
+                text('GAME OVER', width / 2, height / 2 - 50);
+
+                textSize(30);
+                text("Score: " + score, width / 2, height / 2 + 10);
+
+                let reasonText = "";
+                if (deathReason === "enemy") reasonText = "敵にぶつかった";
+                if (deathReason === "tomato") reasonText = "毒トマトを食べた";
+                if (deathReason === "fall") reasonText = "落下した";
+
+                text("Reason: " + reasonText, width / 2, height / 2 + 50);
+
+                // ★★★ 再スタート案内 ★★★
+                textSize(20);
+                text("Press SPACE to Restart", width / 2, height / 2 + 100);
+
+                // ★★★ スペースで再スタート ★★★
+                if (kb.presses("space")) {
+                    resetGame();
+                }
+                return;
+            }
+
+            // クールダウン
+            if (hitCooldown > 0) hitCooldown--;
+
+            //=========================
+            //   GAME OVER（落下）
+            //=========================
+            if (player.y > height + 50) {
+                isGameOver = true;
+                deathReason = "fall";
+            }
+
+            //=========================
+            //   操作
+            //=========================
+            if (kb.pressing('right')) {
+                player.vel.x = 5;
+            } else if (kb.pressing('left')) {
+                player.vel.x = -5;
+            } else {
+                player.vel.x = 0;
+            }
+
+            if (kb.presses('up') && player.colliding(floor)) {
+                player.vel.y = -5;
+            }
+
+            //=========================
+            //   敵生成
+            //=========================
+            if (frameCount % 120 === 0) {
+                let enemy = new enemies.Sprite(width, 380);
+                enemy.vel.x = -5;
+            }
+
+            enemies.cull(100);
+
+
+            //=========================
+            //   ライフ減少処理
+            //=========================
+            if (player.overlaps(enemies) && hitCooldown === 0) {
+                life--;
+                hitCooldown = 60;
+
+                // 物理リセット（重要）
+                player.vel.x = 0;
+                player.vel.y = 0;
+
+                // 少し浮かせて床判定が消えないようにする
+                player.y -= 5;
+
+                // ダメージ演出
+                player.tint = color(255, 0, 0, 180);
+                setTimeout(() => {
+                    player.tint = 'white';
+                }, 200);
+
+                if (life <= 0) {
+                    isGameOver = true;
+                    player.image = bakuhatsuImg;
+                    setTimeout(() => {
+                        player.image = playerImg;
+                        player.rotation = 90;
+                    }, 1000);
+                    deathReason = "enemy"
+                }
+            }
+
+            //=========================
+            //   アイテム生成（3～6秒ごと）
+            //=========================
+            if (frameCount % int(random(180, 360)) === 0) {
+                let item = new items.Sprite(width, 360); // 床の上あたり
+                item.vel.x = -3; // ゆっくり流れる
+
+                // ★ランダムで画像を設定
+                let imgIndex = int(random(0, 3));
+                item.image = itemImages[imgIndex];
+            }
+
+            //=========================
+            //   アイテム取得処理
+            //=========================
+            items.overlaps(player, (item, playerObj) => {
+                if (life < 3) {
+                    life++;  // ライフ回復
+                }
+
+                item.remove(); // ←アイテムを消す（プレイヤーは消さない）
+            });
+
+            //=========================
+            //   トマト生成（2～5秒ごと）
+            //=========================
+            if (frameCount % int(random(120, 300)) === 0) {
+                let t = new tomatoes.Sprite(width, 360);
+                t.image = tomatoImg;
+                t.vel.x = -4;  // ちょっと速め
+            }
+
+            //=========================
+            //   トマト処理
+            //=========================
+            tomatoes.overlaps(player, (tomato, playerObj) => {
+                life = 0;
+                isGameOver = true;
+                tomato.remove();
+                player.image = bakuhatsuImg;
+                setTimeout(() => {
+                    player.image = playerImg;
+                    player.rotation = 90;
+                }, 1000);
+                deathReason = "tomato"
+            });
+
+            //==========================
+            //   ゲームリセット処理
+            //==========================
+            function resetGame() {
+                // 基本状態のリセット
+                isGameOver = false;
+                life = 3;
+                score = 0;
+                hitCooldown = 0;
+                deathReason = "";
+
+                // プレイヤー位置リセット
+                player.x = 100;
+                player.y = 350;
+                player.vel.x = 0;
+                player.vel.y = 0;
+                player.rotation = 0;
+
+                // 既存の敵・アイテム・トマトを消す
+                enemies.removeAll();
+                items.removeAll();
+                tomatoes.removeAll();
+            }
+        }
+    </script>
+</body>
+
+</html>

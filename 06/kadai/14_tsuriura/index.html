@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <script src="https://p5play.org/v3/p5play.js"></script>
+
+    <script>
+        let player, floor, enemies;
+        let isGameOver = false;
+
+        let life = 3;
+        let invincible = false; // ←★追加：無敵フラグ
+
+        let playerImg, enemyImgWolf, enemyImgGhost, enemyImgDragon;
+
+        function preload() {
+            playerImg = loadImage('okazu_wiener_kani.svg');
+            enemyImgWolf = loadImage('character_monster_okamiotoko_02_gray.svg');
+            enemyImgGhost = loadImage('character_monster_ghost_black.svg');
+            enemyImgDragon = loadImage('character_monster_dragon_01_purple.svg');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 10;
+
+            // プレイヤー
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.scale = 0.1;
+            player.rotationLock = true;
+            player.collider = 'dynamic';
+            player.w = playerImg.width * player.scale;
+            player.h = playerImg.height * player.scale;
+
+            // 床
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#666';
+            floor.collider = 'kinematic';
+
+            // 敵
+            enemies = new Group();
+            enemies.collider = 'kinematic';
+        }
+
+        function draw() {
+            background(255);
+
+            // === ライフ表示 ===
+            fill(0);
+            textSize(24);
+            text("LIFE: " + "❤️".repeat(life), 20, 40);
+
+            // === GAME OVER ===
+            if (isGameOver) {
+                fill(0);
+                textSize(50);
+                textAlign(CENTER);
+                text("GAME OVER", width / 2, height / 2);
+                return;
+            }
+
+            // === 操作 ===
+            if (kb.pressing("right")) player.vel.x = 5;
+            else if (kb.pressing("left")) player.vel.x = -5;
+            else player.vel.x = 0;
+
+            if (kb.presses("up") && player.colliding(floor)) {
+                player.vel.y = -5;
+            }
+
+            // ===== 敵生成 =====
+            if (frameCount % 120 === 0) {
+                let type = Math.floor(Math.random() * 3);
+                let img =
+                    type === 2 ? enemyImgDragon :
+                        type === 0 ? enemyImgWolf :
+                            enemyImgGhost;
+
+                let enemy = new enemies.Sprite(width, 0);
+                enemy.image = img;
+                enemy.scale = 0.1;
+
+                // 高さ
+                let h = img.height * enemy.scale;
+
+                if (type === 2) {
+                    enemy.y = 300;
+                } else {
+                    enemy.y = floor.y - floor.h / 2 - h / 2;
+                }
+
+                enemy.vel.x = -5;
+            }
+
+            enemies.cull(100);
+
+            // ===== 当たり判定 =====
+            let hitEnemy = player.colliding(enemies);
+
+            if (hitEnemy && !invincible) {
+
+                // ライフ減少
+                life--;
+
+                // ★無敵時間 ON
+                invincible = true;
+
+                // ★敵を通り抜け可にする
+                hitEnemy.collider = "none";
+
+                // ★透明化演出
+                player.opacity = 0.3;
+
+                // 200ms 後に無敵解除
+                setTimeout(() => {
+                    if (!isGameOver) {
+                        invincible = false;
+                        hitEnemy.collider = "kinematic"; // ←敵を元に戻す
+                        player.opacity = 1;
+                    }
+                }, 200);
+
+                if (life <= 0) {
+                    isGameOver = true;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

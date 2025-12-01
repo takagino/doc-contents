@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>p5.js | スペースキーを押すとゲームがスタートでき、ゲームオーバーになってスペースキーを押すとゲームがスタートできるようにする</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+        let player, floor;
+        let enemies;
+        let isGameOver = false;
+        let isGameStarted = false;//既存のソースコードに追加
+        let playerImg, enemyImg;
+
+        function preload() {
+            playerImg = loadImage('player.svg');
+            enemyImg = loadImage('enemy.svg');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 10;
+
+            //ゲームの初期化
+            initializeGame();
+        }
+
+        //ゲームの初期化処理をまとめた関数
+        function initializeGame() {
+            //既存のSpriteがあったら削除する
+            if (floor) floor.remove();
+            if (player) player.remove();
+
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#666';
+            floor.collider = 'static';
+
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.scale = 0.1;
+
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = 'kinematic';
+            enemies.scale = 0.1;
+
+            isGameOver = false;//リセット時にゲームオーバーフラグを解除する
+        }
+
+        function draw() {
+            background(255);
+
+            //ゲーム開始前
+            if (!isGameStarted) {
+                fill(0);
+                textSize(50);
+                textAlign(CENTER);
+                text('GAME START', width / 2, height / 2);
+                return;
+            }
+
+            if (isGameOver) {
+                fill(0);
+                textSize(50);
+                textAlign(CENTER);
+                text('GAME OVER', width / 2, height / 2);
+                return;
+            }
+
+            if (kb.pressing('right')) {
+                player.vel.x = 5;
+            } else if (kb.pressing('left')) {
+                player.vel.x = -5;
+            } else {
+                player.vel.x = 0;
+            }
+
+            if (kb.presses('up') && player.colliding(floor)) {
+                player.vel.y = -5;
+            }
+
+            if (frameCount % 120 === 0) {
+                let enemy = new enemies.Sprite(width, 380);
+                enemy.vel.x = -5;
+            }
+
+            enemies.cull(100);
+
+            if (player.collides(enemies)) {
+                isGameOver = true;
+                player.tint = '#666';
+            }
+        }
+
+        //スペースキー
+        function keyPressed() {
+            if (key === ' ' || keyCode === 32) {
+                if (!isGameStarted) {
+                    isGameStarted = true;
+                }
+                else if (isGameOver) {
+                    initializeGame();
+                }
+            }
+
+            if (key === ' ') {
+                return false;
+            }
+        }
+    </script>
+</body>
+
+</html>

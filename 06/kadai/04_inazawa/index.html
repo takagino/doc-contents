@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>GAME</title>
+    <style>
+        body {
+            background-color: rgb(0, 255, 225);
+        }
+
+        canvas {
+            border: 1px solid #aaa;
+            margin-top: 100px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+        let player, floor;
+        let enemies;
+        let isGameOver = false;
+        let playerImg, enemyImg;
+
+        let bounceAngle = 0; // ← 追加（敵の上下バウンス用）
+
+        function preload() {
+            playerImg = loadImage('salmon.svg');
+            enemyImg = loadImage('dog.svg');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 10;
+
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#ff1';
+            floor.collider = 'static';
+
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.scale = 0.1;
+
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = 'kinematic';
+            enemies.scale = 0.1;
+        }
+
+        function draw() {
+            background(255);
+
+            if (isGameOver) {
+                noStroke();
+                fill(0, 150);
+                rect(0, 0, width, height);
+
+
+                bounceAngle += 0.08;
+                let bounceText = sin(bounceAngle) * 12;
+                let bounceEnemy = sin(bounceAngle * 1.4) * 18;
+
+                fill(255);
+                textSize(50);
+                textStyle(BOLD);
+                textAlign(CENTER);
+                text('GAME OVER', width / 2, height / 2 + bounceText);
+
+                // ↓↓↓ 敵が上下にぴょこぴょこ跳ねるアニメーション ↓↓↓
+                let enemyBounce = sin(bounceAngle * 1.5) * 15;
+                for (let e of enemies) {
+                    e.collider = 'none';
+                    e.vel.x = 0;
+                    e.pos.x = width / 2;
+                    e.pos.y = height / 2 + 120 + bounceEnemy;
+                    e.scale = 0.25;
+                }
+            } else {
+                if (kb.pressing('right')) player.vel.x = 5;
+                else if (kb.pressing('left')) player.vel.x = -5;
+                else player.vel.x = 0;
+
+                if (kb.presses('up') && player.colliding(floor)) player.vel.y = -5;
+
+                if (frameCount % 120 === 0) {
+                    let enemy = new enemies.Sprite(width, 380);
+                    enemy.vel.x = -5;
+                }
+
+                enemies.cull(100);
+
+                if (player.collides(enemies)) {
+                    isGameOver = true;
+                    player.tint = '#666';
+                    for (let e of enemies) e.vel.x = 0;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <button
+      id="reloadBtn"
+      style="
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 10px 20px;
+        font-size: 20px;
+      "
+    >
+      もう一回
+    </button>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+      let floor, player;
+      let monsters;
+      let isGameOver = false;
+      let buttonX, buttonY, buttonW, buttonH;
+      let score = 0;
+      let playerImg;
+      let monsterImg;
+
+      function preload() {
+        playerImg = loadImage("player.png");
+        monsterImg = loadImage("monster.png");
+      }
+      function setup() {
+        createCanvas(640, 480);
+        buttonW = 170;
+        buttonH = 60;
+        buttonX = width / 2 - buttonW / 2;
+        buttonY = height / 2 + 40;
+        world.gravity.y = 10;
+
+        floor = new Sprite(320, 400, 500, 30);
+        floor.color = "#c2aae6";
+        floor.collider = "static";
+
+        player = new Sprite(100, 350);
+        player.image = playerImg;
+        player.scale = 0.1;
+        player.rotationLock = true;
+
+        monsters = new Group();
+        monsters.image = monsterImg;
+        monsters.collider = "kinematic";
+        monsters.scale = 0.1;
+      }
+
+      function draw() {
+        background(255);
+
+        if (isGameOver) {
+          fill(0);
+          textSize(50);
+          textAlign(CENTER);
+          text("GAME OVER", width / 2, height / 2 - 60);
+          textSize(30);
+          text("Score: " + score, width / 2, height / 2);
+          fill("#c2aae6");
+          rect(buttonX, buttonY, buttonW, buttonH, 10);
+          fill("255");
+          textSize(30);
+          text("Restart", width / 2, buttonY + buttonH / 2 + 10);
+
+          return;
+        }
+
+        fill(0);
+        textSize(20);
+        text("Score: " + score, 10, 40);
+
+        if (kb.pressing("right")) {
+          player.vel.x = 5;
+        } else if (kb.pressing("left")) {
+          player.vel.x = -5;
+        } else {
+          player.vel.x = 0;
+        }
+
+        if (kb.presses("up") && player.colliding(floor)) {
+          player.vel.y = -5;
+        }
+
+        if (frameCount % 120 === 0) {
+          let monsterY = random(360, 370);
+          let monster = new monsters.Sprite(width, monsterY);
+          monster.vel.x = -5;
+          monster.counted = false;
+        }
+
+        for (let m of monsters) {
+          if (!m.counted && m.x < 0) {
+            score++;
+            m.counted = true;
+          }
+        }
+
+        monsters.cull(100);
+
+        if (player.collides(monsters)) {
+          isGameOver = true;
+          player.tint = "#666";
+        }
+      }
+
+      function mousePressed() {
+        if (isGameOver) {
+          if (
+            mouseX >= buttonX &&
+            mouseX <= buttonX + buttonW &&
+            mouseY >= buttonY &&
+            mouseY <= buttonY + buttonH
+          ) {
+            location.reload();
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

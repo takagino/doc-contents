@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5play Game</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <script src="https://p5play.org/v3/p5play.js"></script>
+
+    <script>
+      let player, floor;
+      let enemies, coins, ghosts, bullets, candies;
+      let isGameOver = false;
+
+      let playerImg, coinImg, ghostImg, candyImg;
+      let frankImg, okamiImg, jackImg, daitenshiImg;
+      let gaugeHeartMaxImg, gaugeHeartEmptyImg;
+      let enemyImages = [];
+
+      let money = 0;
+      let moneyPopups = [];
+      const maxMoney = 9999;
+
+      let isAngel = false;
+      let angelTimer = 0;
+      const ANGEL_DURATION = 30 * 50;
+
+      let hearts = 3; // 体力
+      let playerHit = 0; // 点滅フレームカウント
+
+      function preload() {
+        playerImg = loadImage("player.svg");
+        coinImg = loadImage("coin.svg");
+        ghostImg = loadImage("ghost.svg");
+        candyImg = loadImage("candy.svg");
+
+        gaugeHeartMaxImg = loadImage("gauge_heart_max.svg");
+        gaugeHeartEmptyImg = loadImage("gauge_heart_empty.svg");
+
+        frankImg = loadImage("frankenstein.svg");
+        okamiImg = loadImage("okamiotoko.svg");
+        jackImg = loadImage("jackolantern.svg");
+        enemyImages = [frankImg, okamiImg, jackImg];
+
+        daitenshiImg = loadImage("daitenshi.svg");
+      }
+
+      function setup() {
+        createCanvas(640, 480);
+        world.gravity.y = 25;
+        frameRate(50);
+
+        player = new Sprite(100, 350);
+        player.image = playerImg;
+        player.rotationLock = true;
+        player.scale = 0.1;
+        player.layer = 2;
+
+        floor = new Sprite(320, 400, 500, 30);
+        floor.color = "#666";
+        floor.collider = "static";
+        floor.layer = 1;
+
+        enemies = new Group();
+        enemies.collider = "kinematic";
+        enemies.scale = 0.1;
+
+        coins = new Group();
+        coins.collider = "kinematic";
+
+        ghosts = new Group();
+        ghosts.image = ghostImg;
+        ghosts.scale = 0.08;
+        ghosts.collider = "kinematic";
+        ghosts.gravityScale = 0;
+
+        bullets = new Group();
+        bullets.color = "#ff0";
+        bullets.collider = "dynamic";
+        bullets.bounciness = 0;
+        bullets.friction = 0;
+
+        candies = new Group(); // candyグループ
+        candies.collider = "kinematic";
+      }
+
+      function draw() {
+        background(255);
+
+        if (isGameOver) {
+          fill(0);
+          textSize(50);
+          textAlign(CENTER);
+          text("GAME OVER", width / 2, height / 2);
+          return;
+        }
+
+        // プレイヤー操作
+        if (kb.pressing("right")) player.vel.x = 8;
+        else if (kb.pressing("left")) player.vel.x = -8;
+        else player.vel.x = 0;
+
+        if (kb.presses("up") && player.colliding(floor)) player.vel.y = -14;
+        if (kb.pressing("up") && !player.colliding(floor)) player.vel.y = -6;
+
+        // 大天使変身
+        if (kb.presses("space") && money >= 100 && !isAngel) {
+          isAngel = true;
+          angelTimer = ANGEL_DURATION;
+          player.image = daitenshiImg;
+          money -= 100;
+        }
+
+        if (isAngel) {
+          angelTimer--;
+          if (kb.presses("a")) {
+            let b = new bullets.Sprite(player.x + 20, player.y);
+            b.diameter = 12;
+            b.vel.x = 12;
+            b.collider = "dynamic"; // 敵には当たる
+            b.overlaps(coins, (bullet, coin) => {}); // コインとは何もしない＝すり抜け
+            b.color = color(173, 216, 230);
+          }
+          if (angelTimer <= 0) {
+            isAngel = false;
+            player.image = playerImg;
+          }
+        }
+
+        // 敵生成
+        if (frameCount % 120 === 0) {
+          let enemy = new enemies.Sprite(width, 380);
+          enemy.image = random(enemyImages);
+          enemy.vel.x = -5;
+        }
+        enemies.cull(100);
+
+        // コイン生成
+        if (frameCount % 100 === 0) {
+          let c = new coins.Sprite(random(50, width - 50), random(200, 350));
+          c.image = coinImg;
+          c.scale = 0.05;
+          c.diameter = 50;
+        }
+
+        // candy生成（レア）
+        if (frameCount % 600 === 0) {
+          // コインよりレア
+          let candy = new candies.Sprite(
+            random(50, width - 50),
+            random(150, 300)
+          );
+          candy.image = candyImg;
+          candy.scale = 0.1;
+          candy.diameter = 60;
+        }
+
+        // コイン取得
+        player.collides(coins, (p, c) => {
+          c.remove();
+          money += 10;
+          if (money > maxMoney) money = maxMoney;
+          moneyPopups.push({
+            x: player.x,
+            y: player.y - 30,
+            value: "+10",
+            alpha: 255,
+          });
+        });
+
+        // candy取得（体力回復）
+        player.overlaps(candies, (p, c) => {
+          c.remove();
+          if (hearts < 3) hearts++; // 最大3まで回復
+        });
+
+        // ゴースト生成
+        if (frameCount % 180 === 0) {
+          let yPos = random(120, 260);
+          let g = new ghosts.Sprite(width + 60, yPos);
+          g.gravityScale = 0;
+          g.fixedRotation = true;
+          g.baseY = yPos;
+          g.t = random(0, TWO_PI);
+          g.vel.x = -2.0;
+        }
+        ghosts.cull(100);
+
+        for (let g of ghosts) {
+          g.t += 0.12;
+          g.vel.y = Math.sin(g.t) * 1.6;
+        }
+
+        // 弾削除
+        bullets.cull(50);
+
+        bullets.collides(enemies, (b, e) => {
+          b.remove();
+          e.remove();
+        });
+        bullets.collides(ghosts, (b, g) => {
+          b.remove();
+          g.remove();
+        });
+
+        // 敵・ゴースト接触
+        player.collides(enemies, (p, e) => {
+          damagePlayer();
+        });
+        player.collides(ghosts, (p, g) => {
+          damagePlayer();
+        });
+
+        // 点滅処理（赤と青の判定）
+        if (playerHit > 0) {
+          player.tint = color(255, 0, 0);
+          playerHit--;
+        } else if (isAngel) {
+          // 変身切れる5〜3秒前で青点滅
+          if (angelTimer <= 250 && angelTimer >= 150) {
+            if (frameCount % 10 < 5) player.tint = color(173, 216, 230);
+            // 青点滅
+            else player.tint = color(255); // 通常
+          } else {
+            player.tint = color(255);
+          }
+        } else {
+          player.tint = color(255);
+        }
+
+        // UI：コイン
+        image(coinImg, width - 560, 12, 30, 30);
+
+        // コイン最大100で制限
+        if (money > 100) money = 100;
+
+        // コインの色
+        if (money >= 100) fill(255, 0, 0); // 赤
+        else fill(0); // 通常黒
+
+        textSize(22);
+        textAlign(LEFT);
+        text(money, width - 520, 34);
+
+        // コイン100到達でメッセージ表示
+        textSize(18);
+        textAlign(LEFT);
+        if (money >= 100 && !isAngel) {
+          fill(0);
+          text("SPACEで変身", width - 560, 70);
+        } else if (isAngel) {
+          fill(0);
+          text("Aで攻撃", width - 560, 70);
+        }
+
+        // UI：大天使残り時間
+        if (isAngel) {
+          fill(255, 0, 0);
+          textSize(18);
+          textAlign(RIGHT);
+          text("変身残り: " + ceil(angelTimer / 50) + "秒", width - 250, 34);
+        }
+
+        // UI：コインポップアップ
+        for (let i = moneyPopups.length - 1; i >= 0; i--) {
+          let pop = moneyPopups[i];
+          fill(0, pop.alpha);
+          textSize(20);
+          text(pop.value, pop.x, pop.y);
+          pop.y -= 0.5;
+          pop.alpha -= 3;
+          if (pop.alpha <= 0) moneyPopups.splice(i, 1);
+        }
+
+        // UI：ハート表示
+        for (let i = 0; i < 3; i++) {
+          if (i < hearts) {
+            image(gaugeHeartMaxImg, width - 200 + i * 40, 10, 32, 32);
+          } else {
+            image(gaugeHeartEmptyImg, width - 200 + i * 40, 10, 32, 32);
+          }
+        }
+      }
+
+      function damagePlayer() {
+        if (playerHit == 0 && !isAngel) {
+          hearts--;
+          playerHit = 20; // 赤点滅フレーム
+          if (hearts <= 0) isGameOver = true;
+        }
+      }
+    </script>
+  </body>
+</html>

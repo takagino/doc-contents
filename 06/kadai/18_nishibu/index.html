@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>p5play</title>
+  <style>
+    canvas {
+      border: 1px solid #aaa;
+    }
+    .gameBtn {
+      position: absolute;
+      padding: 15px 35px;
+      font-size: 24px;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="startBtn" class="gameBtn">START</button>
+  <button id="retryBtn" class="gameBtn">RETRY</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+  <script src="https://p5play.org/v3/p5play.js"></script>
+
+  <script>
+    let player, floor;
+    let enemies;
+    let isGameOver = false;
+    let isGameStarted = false;
+
+    let playerImg, enemyImg;
+
+    let score = 0;
+
+    function preload() {
+      playerImg = loadImage('player.svg');
+      enemyImg = loadImage('enemy.svg');
+    }
+
+    function setup() {
+      const canvas = createCanvas(640, 480);
+      world.gravity.y = 10;
+
+      const startBtn = document.getElementById("startBtn");
+      const retryBtn = document.getElementById("retryBtn");
+
+      positionStartButton(canvas, startBtn);
+
+      window.addEventListener("resize", () => {
+        positionStartButton(canvas, startBtn);
+      });
+
+      startBtn.style.display = "block";
+      startBtn.onclick = () => {
+        isGameStarted = true;
+        startBtn.style.display = "none";
+      };
+
+      retryBtn.onclick = () => {
+        resetGame();
+        retryBtn.style.display = "none";
+      };
+
+      floor = new Sprite(320, 400, 500, 30);
+      floor.collider = 'static';
+
+      player = new Sprite(100, 350, 40, 60);
+      player.collider = "dynamic";
+      player.image = playerImg;
+      player.scale = 0.1;
+
+      enemies = new Group();
+      enemies.image = enemyImg;
+      enemies.collider = 'kinematic';
+      enemies.scale = 0.1;
+    }
+
+    function positionStartButton(canvas, btn) {
+      btn.style.visibility = "hidden";
+      btn.style.display = "block";
+
+      const rect = canvas.elt.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      btn.style.left = (centerX - btn.offsetWidth / 2) + "px";
+      btn.style.top  = (centerY + 60) + "px";
+
+      btn.style.display = "none";
+      btn.style.visibility = "visible";
+    }
+
+    function positionRetryButton(canvas, btn) {
+      btn.style.visibility = "hidden";
+      btn.style.display = "block";
+
+      const rect = canvas.elt.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      btn.style.left = (centerX - btn.offsetWidth / 2) + "px";
+      btn.style.top = (centerY + 60) + "px";
+
+      btn.style.visibility = "visible";
+    }
+
+    function resetGame() {
+      isGameOver = false;
+      isGameStarted = true;
+
+      player.pos.set(100, 350);
+      player.vel.set(0, 0);
+      player.tint = '';
+
+      enemies.removeAll();
+      score = 0;
+    }
+
+    function draw() {
+      background(255);
+
+      const retryBtn = document.getElementById("retryBtn");
+      const canvas = this._renderer;
+
+      if (!isGameStarted) {
+        fill(0);
+        textSize(32);
+        textAlign(CENTER);
+        text("スタートボタンを押してね", width / 2, height / 2 + 30);
+        return;
+      }
+
+      // ★ スコア表示
+      textSize(24);
+      fill(0);
+      textAlign(RIGHT, TOP);
+      text("SCORE: " + score, width - 10, 10);
+
+      if (isGameOver) {
+        fill(0);
+        textSize(50);
+        textAlign(CENTER);
+        text("GAME OVER", width / 2, height / 2);
+
+        retryBtn.style.display = "block";
+        positionRetryButton(canvas, retryBtn);
+
+        return;
+      }
+
+      // --- 操作 ---
+      if (kb.pressing('right')) player.vel.x = 5;
+      else if (kb.pressing('left')) player.vel.x = -5;
+      else player.vel.x = 0;
+
+      if (kb.presses('up') && player.colliding(floor)) {
+        player.vel.y = -8;
+      }
+
+      // --- 敵を上から出す ---
+      if (frameCount % 60 === 0) {
+        let enemy = new enemies.Sprite(random(50, width - 50), -50);
+        enemy.vel.y = 5;
+
+        enemy.scored = false;
+      }
+
+      // --- 敵を避けた判定（下まで落ちたら） ---
+      for (let e of enemies) {
+        if (!e.scored && e.y > height + 50) {
+          score++;
+          e.scored = true;
+        }
+      }
+
+      enemies.cull(200);
+
+      // --- 当たったらアウト ---
+      if (player.collides(enemies)) {
+        isGameOver = true;
+        player.tint = '#666';
+      }
+    }
+  </script>
+</body>
+</html>

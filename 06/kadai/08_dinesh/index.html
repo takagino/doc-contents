@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+      canvas {
+        border: 1px solid #aaa;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+      let player, floor;
+      let enemies;
+      let isGameOver = false;
+      let playerImg, enemyImg;
+
+      function preload() {
+        playerImg = loadImage("yusha.png");
+        enemyImg = loadImage("enemy.png");
+      }
+
+      function setup() {
+        createCanvas(640, 480);
+        world.gravity.y = 10;
+
+        floor = new Sprite(320, 400, 500, 30);
+        floor.color = "#666";
+        floor.collider = "static";
+
+        player = new Sprite(100, 350);
+        player.image = playerImg;
+        player.scale = 0.1;
+
+        enemies = new Group();
+        enemies.image = enemyImg;
+        enemies.collider = "kinematic";
+        enemies.scale = 0.02;
+
+        slashes = new Group();
+        slashes.collider = "none";
+
+        deathFx = new Group();
+        deathFx.collider = "none";
+      }
+
+      function draw() {
+        background(255);
+
+        if (isGameOver) {
+          fill(0);
+          textSize(50);
+          textAlign(CENTER);
+          text("GAME OVER", width / 2, height / 2);
+          text("Press X to servive", width / 2, height / 10);
+          return;
+        }
+
+        if (kb.pressing("right")) {
+          player.vel.x = 5;
+        } else if (kb.pressing("left")) {
+          player.vel.x = -5;
+        } else {
+          player.vel.x = 0;
+        }
+
+        if (kb.presses("up") && player.colliding(floor)) {
+          player.vel.y = -5;
+        }
+
+        if (frameCount % 120 === 0) {
+          let enemy = new enemies.Sprite(width, 380);
+          enemy.vel.x = -5;
+        }
+
+        if (frameCount % 120 === 0) {
+          let enemy = new enemies.Sprite(width, 380);
+          enemy.scale = random(0.01, 0.05);
+          enemy.vel.x = -5;
+        }
+
+        enemies.cull(100);
+
+        if (player.collides(enemies)) {
+          isGameOver = true;
+          player.tint = "#666";
+        }
+
+        if (kb.pressing("x")) {
+          for (let e of enemies) {
+            if (player.overlaps(e)) {
+              e.color = "#f00";
+
+              if (e.scale < 0.03) {
+                continue;
+              }
+              e.remove();
+              let ex = e.x;
+              let ey = e.y;
+
+              player.vel.y = -3;
+
+              let slash = new slashes.Sprite(player.x + 20, player.y);
+              slash.w = 40;
+              slash.h = 10;
+              slash.color = "#ff0000";
+              slash.rotationSpeed = 30;
+              slash.life = 10;
+
+              let fx = new deathFx.Sprite(ex, ey);
+              fx.d = 10;
+              fx.color = "#ff6600";
+              fx.stroke = "red";
+              fx.strokeWeight = 2;
+
+              fx.life = 20;
+              fx.scaleSpeed = 0.1;
+              fx.fadeSpeed = 10;
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

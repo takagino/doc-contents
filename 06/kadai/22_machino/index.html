@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>フルスクリーンランナー</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+      button {
+        cursor: pointer;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/planck@1.0.5/dist/planck.min.js"></script>
+    <script src="https://p5play.org/v3/p5play.js"></script>
+
+    <script>
+      let player, floor;
+      let enemiesGround, enemiesFly, coins, powers, magnets, shields;
+      let score = 0,
+        superJump = 0,
+        life = 3;
+      let invincible = 0,
+        magnetActive = 0,
+        shieldActive = 0;
+      let coinCombo = 0,
+        comboTimer = 0;
+      let scrollX = 0;
+      let particles = [];
+
+      let state = "title";
+      let startButton;
+
+      // 画像
+      let imgPlayer, imgEnemy, imgEnemyFly, imgCoin, imgPower;
+
+      function preload() {
+        imgPlayer = loadImage("./player.svg");
+        imgEnemy = loadImage("./enemy.svg");
+        imgEnemyFly = loadImage("./enemyFlying.svg");
+        imgCoin = loadImage("./coin.svg");
+        imgPower = loadImage("./power.svg");
+      }
+
+      function setup() {
+        createCanvas(windowWidth, windowHeight);
+        world.gravity.y = 10;
+
+        enemiesGround = new Group();
+        enemiesFly = new Group();
+        coins = new Group();
+        powers = new Group();
+        magnets = new Group();
+        shields = new Group();
+
+        // 敵同士の衝突を無効化
+        enemiesGround.overlaps(enemiesGround);
+        enemiesFly.overlaps(enemiesFly);
+        enemiesGround.overlaps(enemiesFly);
+
+        startButton = createButton("ゲーム開始");
+        startButton.position(width / 2 - 60, height / 2 + 50);
+        startButton.size(120, 50);
+        startButton.mousePressed(() => {
+          state = "play";
+          startButton.hide();
+          initGame();
+        });
+      }
+
+      function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+        if (floor) {
+          floor.x = width / 2;
+          floor.y = height - 120;
+          floor.w = width;
+        }
+      }
+
+      function initGame() {
+        if (player) player.remove();
+        if (floor) floor.remove();
+
+        // 修正: removeSprites()ではなく、各スプライトを個別に削除
+        for (let e of enemiesGround) e.remove();
+        for (let e of enemiesFly) e.remove();
+        for (let c of coins) c.remove();
+        for (let p of powers) p.remove();
+        for (let m of magnets) m.remove();
+        for (let s of shields) s.remove();
+
+        score = 0;
+        superJump = 0;
+        life = 3;
+        invincible = 0;
+        magnetActive = 0;
+        shieldActive = 0;
+        coinCombo = 0;
+        comboTimer = 0;
+        scrollX = 0;
+        particles = [];
+
+        floor = new Sprite(width / 2, height - 120, width, 30);
+        floor.collider = "static";
+
+        player = new Sprite(100, height - 150, 30, 30);
+        player.img = imgPlayer;
+        player.scale = 0.1;
+        player.rotationLock = true;
+        player.vel.y = 0;
+      }
+
+      function draw() {
+        background(200, 230, 255);
+        if (state === "title") drawTitleScreen();
+        else if (state === "play") drawGame();
+        else if (state === "gameover") drawGameOver();
+      }
+
+      function drawTitleScreen() {
+        textAlign(CENTER, CENTER);
+        fill(0);
+        textSize(60);
+        text("SUPER RUNNER", width / 2, height / 2 - 50);
+        textSize(20);
+        text("矢印キーで移動、UPでジャンプ", width / 2, height / 2);
+        startButton.show();
+      }
+
+      function drawGame() {
+        // 修正: playerの存在チェックを最初に実施
+        if (!player) return;
+
+        scrollX -= 4;
+        if (scrollX <= -width) scrollX = 0;
+
+        drawBackgroundScroll();
+        updateParticles();
+        drawStatus();
+        handlePlayerInput();
+        spawnAndRemoveSprites();
+        handleCollisions();
+        handlePickups();
+
+        if (player.y > height + 50) state = "gameover";
+      }
+
+      function drawGameOver() {
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(50);
+        text("GAME OVER", width / 2, height / 2 - 30);
+        textSize(25);
+        fill(0);
+        text("Score: " + score, width / 2, height / 2 + 30);
+        textSize(20);
+        fill(100, 0, 0);
+        text("Press R to Restart", width / 2, height / 2 + 70);
+
+        if (keyIsPressed && (key === "r" || key === "R")) {
+          // 全てのスプライトを削除してからゲームを再開
+          for (let e of enemiesGround) e.remove();
+          for (let e of enemiesFly) e.remove();
+          for (let c of coins) c.remove();
+          for (let p of powers) p.remove();
+          for (let m of magnets) m.remove();
+          for (let s of shields) s.remove();
+
+          state = "play";
+          initGame();
+        }
+      }
+
+      function drawStatus() {
+        fill(0);
+        textSize(24);
+        textAlign(LEFT, TOP);
+        text("Score: " + score, 20, 20);
+        text("Life: " + life, 180, 20);
+
+        if (comboTimer > 0) {
+          comboTimer--;
+          fill(255, 215, 0);
+          textSize(30);
+          textAlign(CENTER, TOP);
+          text("COMBO x" + coinCombo, width / 2, 60);
+        }
+
+        if (superJump > 0) superJump--;
+        if (magnetActive > 0) magnetActive--;
+        if (shieldActive > 0) shieldActive--;
+
+        // 修正: playerの存在チェック
+        if (shieldActive > 0 && player) {
+          noFill();
+          stroke(255, 165, 0, 200);
+          strokeWeight(3);
+          ellipse(player.x, player.y, 60, 60);
+          noStroke();
+        }
+
+        if (invincible > 0) {
+          invincible--;
+          if (player) player.tint = color(150, 150, 255, 150);
+        } else {
+          if (player) player.tint = color(255, 255, 255);
+        }
+      }
+
+      function handlePlayerInput() {
+        if (!player) return;
+        if (keyIsDown(RIGHT_ARROW)) player.vel.x = 5;
+        else if (keyIsDown(LEFT_ARROW)) player.vel.x = -5;
+        else player.vel.x = 0;
+
+        if (player.x < 50) player.x = 50;
+
+        if (keyIsDown(UP_ARROW) && player.colliding(floor)) {
+          player.vel.y = superJump > 0 ? -12 : -8;
+        }
+      }
+
+      function drawBackgroundScroll() {
+        fill(160, 200, 255);
+        noStroke();
+        rect(scrollX, 0, width, height);
+        rect(scrollX + width, 0, width, height);
+
+        fill(255, 255, 255, 150);
+        ellipse((scrollX + 100) % (width * 2), 80, 60, 40);
+        ellipse((scrollX + 300) % (width * 2), 120, 80, 50);
+        ellipse((scrollX + 500) % (width * 2), 60, 70, 45);
+      }
+
+      function createParticles(x, y, col) {
+        for (let i = 0; i < 10; i++) {
+          particles.push({
+            x,
+            y,
+            vx: random(-3, 3),
+            vy: random(-3, 3),
+            life: 30,
+            color: col,
+          });
+        }
+      }
+
+      function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          let p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.2;
+          p.life--;
+          fill(p.color);
+          noStroke();
+          ellipse(p.x, p.y, 5, 5);
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+
+      function spawnAndRemoveSprites() {
+        // 地上敵
+        if (frameCount % 90 === 0) {
+          // 60→90に変更(出現頻度を下げる)
+          let e = new Sprite(width + 50, height - 150, 40, 40);
+          e.img = imgEnemy;
+          e.scale = 0.1;
+          e.vel.x = -5; // 固定速度に変更
+          e.collider = "dynamic";
+          e.mass = 0.1; // 軽くして押されにくくする
+          enemiesGround.add(e);
+        }
+        for (let e of enemiesGround) {
+          e.vel.y = 0; // 重力の影響を打ち消す
+          e.vel.x = -5; // 常に一定速度で左に移動
+          if (e.x < -50) e.remove();
+        }
+
+        // 空中敵
+        if (frameCount % 150 === 0) {
+          // 120→150に変更(出現頻度を下げる)
+          let f = new Sprite(
+            width + 50,
+            random(height - 250, height - 180),
+            40,
+            40
+          );
+          f.img = imgEnemyFly;
+          f.scale = 0.1;
+          f.vel.x = -4; // 固定速度に変更
+          f.collider = "dynamic";
+          f.mass = 0.1; // 軽くして押されにくくする
+          enemiesFly.add(f);
+        }
+        for (let f of enemiesFly) {
+          f.vel.y = sin(frameCount / 10 + f.x) * 2;
+          f.vel.x = -4; // 常に一定速度で左に移動
+          if (f.x < -50) f.remove();
+        }
+
+        // コイン
+        if (frameCount % 100 === 0) {
+          // 50→100に変更(出現頻度を半分に)
+          let c = new Sprite(random(100, width - 50), -20, 20, 20);
+          c.img = imgCoin;
+          c.scale = 0.1;
+          c.vel.y = 3;
+          c.rotationSpeed = 5;
+          c.life = 300; // 5秒で消える
+          coins.add(c);
+        }
+        for (let c of coins) {
+          if (magnetActive > 0 && player) {
+            let dx = player.x - c.x,
+              dy = player.y - c.y;
+            let dist = sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+              c.vel.x = dx * 0.1;
+              c.vel.y = dy * 0.1;
+            }
+          }
+          c.life--; // 寿命を減らす
+          if (c.y > height + 50 || c.life <= 0) c.remove(); // 画面外または寿命切れで削除
+        }
+
+        // パワーアップ
+        if (frameCount % 500 === 0) {
+          // 300→500に変更(出現頻度を下げる)
+          let p = new Sprite(random(100, width - 50), -20, 25, 25);
+          p.img = imgPower;
+          p.scale = 0.1;
+          p.vel.y = 3;
+          p.rotationSpeed = 3;
+          p.life = 400; // 約6.7秒で消える
+          powers.add(p);
+        }
+        for (let p of powers) {
+          p.life--; // 寿命を減らす
+          if (p.y > height + 50 || p.life <= 0) p.remove(); // 画面外または寿命切れで削除
+        }
+
+        for (let m of magnets) {
+          m.life--;
+          if (m.y > height + 50 || m.life <= 0) m.remove();
+        }
+        for (let s of shields) {
+          s.life--;
+          if (s.y > height + 50 || s.life <= 0) s.remove();
+        }
+      }
+
+      function handleCollisions() {
+        if (!player) return;
+        if (invincible === 0 && shieldActive === 0) {
+          if (player.collides(enemiesGround) || player.collides(enemiesFly)) {
+            life--;
+            invincible = 60;
+            coinCombo = 0;
+            comboTimer = 0;
+            if (life <= 0) state = "gameover";
+          }
+        } else if (shieldActive > 0) {
+          for (let e of enemiesGround)
+            if (player.overlaps(e)) {
+              e.remove();
+              score += 5;
+              createParticles(e.x, e.y, color(255, 0, 0));
+            }
+          for (let e of enemiesFly)
+            if (player.overlaps(e)) {
+              e.remove();
+              score += 5;
+              createParticles(e.x, e.y, color(128, 0, 128));
+            }
+        }
+      }
+
+      function handlePickups() {
+        if (!player) return;
+        for (let c of coins)
+          if (player.overlaps(c)) {
+            coinCombo++;
+            comboTimer = 120;
+            score += 10 * coinCombo;
+            createParticles(c.x, c.y, color(255, 215, 0));
+            c.remove();
+          }
+        for (let p of powers)
+          if (player.overlaps(p)) {
+            superJump = 240;
+            createParticles(p.x, p.y, color(0, 255, 0));
+            p.remove();
+          }
+        for (let m of magnets)
+          if (player.overlaps(m)) {
+            magnetActive = 300;
+            createParticles(m.x, m.y, color(0, 255, 255));
+            m.remove();
+          }
+        for (let s of shields)
+          if (player.overlaps(s)) {
+            shieldActive = 200;
+            createParticles(s.x, s.y, color(255, 165, 0));
+            s.remove();
+          }
+      }
+    </script>
+  </body>
+</html>

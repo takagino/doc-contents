@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+        let player, floor, backgroundd; // 変数を「player」に変更
+        let enemies; // 敵をまとめるグループ
+        let isGameOver = false; // ゲームオーバーフラグ
+        let damage = 0;
+
+        let backgroundImg;
+        let playerImg;
+        let enemyImg;
+        let playerAfter;
+
+        function preload() {
+            // ファイル名は、実際に保存した画像の名前に書き換えてください
+            // HTMLファイルと同じフォルダに置くのが一番簡単です
+            playerImg = loadImage('akuma.png');
+            enemyImg = loadImage('tensi.png');
+            backgroundImg = loadImage('background.png');
+            playerAfter = loadImage('akumaAfter.png');
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 10;
+
+            // --- 背景 ---
+            backgroundd = new Sprite(640, 480);
+            backgroundd.image = backgroundImg;
+            backgroundd.collider = 'kinematic';
+            backgroundd.scale = 0.2;
+
+            // --- 床 ---
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = '#fbe3ff';
+            floor.stroke = '#fff';
+            floor.collider = 'static';
+
+            // --- プレイヤー ---
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.rotationLock = true;
+            player.scale = 0.2;
+
+
+            // --- 敵グループ ---
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = 'kinematic';
+            enemies.scale = 0.2
+        }
+
+        function draw() {
+            background(backgroundImg);
+
+            if (isGameOver) {
+                fill(255, 255, 255);
+                stroke(255, 156, 248);
+                strokeWeight(7);
+                textSize(50);
+                textAlign(CENTER);
+                textStyle(BOLD);
+                text('GAME OVER', width / 2, height / 2);
+                return;
+            }
+
+            // --- 1. プレイヤーの操作 ---
+            if (kb.pressing('right')) {
+                player.vel.x = 5;
+            } else if (kb.pressing('left')) {
+                player.vel.x = -5;
+            } else {
+                player.vel.x = 0;
+            }
+
+            if (kb.presses('up')) {
+                player.vel.y = -5;
+            }
+
+            // --- 2. 敵の出現 ---
+            // 120フレーム（約2秒）ごとに敵を出す
+            if (frameCount % 80 === 0) {
+                let enemy = new enemies.Sprite(width, 380);
+                enemy.vel.x = -5; // 左へ進む
+                enemy.y = random(200, 400);
+            }
+
+            // 画面から100px以上はみ出たら消す
+            enemies.cull(100);
+
+            // --- 3. 衝突判定 ---
+            if (player.collides(enemies)) {
+                damage++;
+                console.log(damage);
+                if (damage == 1) {
+                    background('#fff');
+                } else if (damage == 3) {
+                    isGameOver = true;
+                    player.image = playerAfter;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

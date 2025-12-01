@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>p5play</title>
+    <style>
+        canvas {
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>スペースで発射</h2>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <!-- planck -->
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <!-- Version 3 of p5.play -->
+    <script src="https://p5play.org/v3/p5play.js"></script>
+    <script>
+
+        //プレイヤー、床、敵、ゲーム状態を宣言
+        let player, floor;
+        let enemies;
+        let isGameOver;
+
+        //画像ファイル宣言
+        let playerImg, enemyImg;
+
+        function preload() {
+            playerImg = loadImage("player.svg");
+            enemyImg = loadImage("enemy.svg");
+        }
+
+        function setup() {
+            createCanvas(640, 480);
+            world.gravity.y = 20;
+
+            //プレイヤー
+            player = new Sprite(100, 350);
+            player.image = playerImg;
+            player.rotationLock = true;
+            player.scale = 0.1;
+
+            //床
+            floor = new Sprite(320, 400, 500, 30);
+            floor.color = "#666";
+            floor.collider = "static";
+
+            //敵
+            enemies = new Group();
+            enemies.image = enemyImg;
+            enemies.collider = "kinematic";
+            enemies.scale = 0.1;
+
+            let enemy;
+
+            //弾丸
+            bullets = new Group();
+            bullets.w = 10;
+            bullets.h = 10;
+            bullets.color = '#f00';
+
+            let bullet;
+
+        }
+
+        function draw() {
+            background(255);
+
+            //死んだら早期リターン
+            if (isGameOver) {
+                fill(0);
+                textSize(50);
+                textAlign(CENTER);
+                text("Game Over", width / 2, height / 2);
+                return;
+            }
+
+            // 移動
+            if (kb.pressing("right")) {
+                player.vel.x = 5;
+            }
+            else if (kb.pressing("left")) {
+                player.vel.x = -5;
+            }
+            else {
+                player.vel.x = 0;
+            }
+
+            // ジャンプ
+            if (kb.pressing("up") && player.colliding(floor)) {
+                player.vel.y = -5;
+            }
+
+            //敵の出現
+            if (frameCount % Math.floor(Math.random() * (120 - 60) + 60) === 0) {
+                enemy = new enemies.Sprite(width, 380);
+                enemy.vel.x = -5;
+            }
+
+            //弾の発射
+            if (kb.presses(" ")) {
+                bullet = new bullets.Sprite(player.pos.x, player.pos.y);
+                bullet.vel.x = 20;
+            }
+
+            //敵が画面外にいったら消す
+            enemies.cull(100);
+            bullets.cull(100);
+
+            // 衝突
+            if (player.collides(enemies)) {
+                isGameOver = true;
+                player.tint = "#666";
+            }
+
+            enemies.forEach(target => {
+                if (target.collides(bullets)) {
+                    target.remove();
+                    bullet.remove();
+                }
+            });
+
+        }
+    </script>
+</body>
+
+</html>
