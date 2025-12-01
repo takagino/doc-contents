@@ -1,54 +1,173 @@
+<!-- index.html -->
+
 <!DOCTYPE html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <title>AI名言ジェネレーター</title>
+    <title>AIゲームマスター</title>
   </head>
   <body>
-    <h1>AI名言ジェネレーター</h1>
-    <p>好きな単語を入力してください（例：勇気、失敗、猫）</p>
+    <div style="margin-bottom: 10px">
+      <input
+        type="text"
+        id="promptInput"
+        placeholder="例: 月面、超高速バトル、氷の世界"
+        size="40"
+      />
+      <button id="sendButton">世界を変える</button>
+    </div>
+    <div
+      id="aiMessage"
+      style="margin-bottom: 10px; font-weight: bold; color: blue"
+    ></div>
 
-    <input type="text" id="wordInput" placeholder="単語を入力" />
-    <button id="sendButton">名言を探す</button>
-    <p><strong id="quoteResult">---</strong></p>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+    <script src="https://p5play.org/v3/p5play.js"></script>
 
     <script>
-      const btn = document.getElementById('sendButton');
-      const input = document.getElementById('wordInput');
-      const quoteResult = document.getElementById('quoteResult');
+      let player, floor, enemies;
+      let isGameOver = false;
+      let isGameStarted = false;
+      let playerImg, enemyImg;
 
-      btn.addEventListener('click', async () => {
-        // 入力された単語を取得
-        const word = input.value;
+      // ★ ゲームのパラメータ管理用オブジェクト (初期値)
+      let gameParams = {
+        gravity: 0,
+        enemySpeed: 5,
+        jumpForce: 8,
+      };
 
-        // 入力チェック
-        if (!word) return;
+      function preload() {
+        playerImg = loadImage('player.svg'); // 用意した画像
+        enemyImg = loadImage('enemy.svg');
+      }
 
-        // ボタンを無効化して状態を表示
-        btn.disabled = true;
-        btn.textContent = '検索中...';
+      function setup() {
+        createCanvas(640, 480);
 
-        try {
-          // サーバーにPOSTリクエストを送信
-          const response = await fetch('http://localhost:3000/api/gemini', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: word }),
-          });
+        // ★ world.gravity.y にパラメータを適用
+        world.gravity.y = gameParams.gravity;
 
-          // レスポンスをJSONとして取得
-          const data = await response.json();
+        floor = new Sprite(320, 400, 500, 30);
+        floor.color = '#666';
+        floor.collider = 'static';
 
-          // 結果を表示
-          quoteResult.textContent = data.result.quote;
-          btn.disabled = false;
-          btn.textContent = '名言を探す';
-        } catch (error) {
-          console.error('通信エラー:', error);
-          btn.disabled = false;
-          btn.textContent = '名言を探す';
+        player = new Sprite(100, 350);
+        player.image = playerImg;
+        player.scale = 0.1;
+        player.rotationLock = true;
+
+        enemies = new Group();
+        enemies.image = enemyImg;
+        enemies.collider = 'kinematic';
+        enemies.scale = 0.1;
+
+        // ★ ボタンのイベントリスナー設定
+        setupAIInterface();
+      }
+
+      function draw() {
+        background(255);
+
+        if (!isGameStarted) {
+          fill(0);
+          textSize(20);
+          textAlign(CENTER);
+          text(
+            '作りたい世界を入力して「世界を変える」を押してね',
+            width / 2,
+            height / 2
+          );
+          return; // ここで draw() を抜ける（下の処理は実行されない）
         }
-      });
+
+        if (isGameOver) {
+          fill(0);
+          textSize(50);
+          textAlign(CENTER);
+          text('GAME OVER', width / 2, height / 2);
+          return;
+        }
+
+        // --- プレイヤー操作 ---
+        if (kb.pressing('right')) player.vel.x = 5;
+        else if (kb.pressing('left')) player.vel.x = -5;
+        else player.vel.x = 0;
+
+        // ★ ジャンプ力にパラメータを適用
+        if (kb.presses('up') && player.colliding(floor)) {
+          player.vel.y = -gameParams.jumpForce;
+        }
+
+        // --- 敵の出現 ---
+        if (frameCount % 120 === 0) {
+          let enemy = new enemies.Sprite(width, 380);
+          // ★ 敵の速さにパラメータを適用 (左に進むのでマイナス)
+          enemy.vel.x = -gameParams.enemySpeed;
+        }
+
+        enemies.cull(100); // 画面外削除
+
+        if (player.collides(enemies)) {
+          isGameOver = true;
+          player.tint = '#666';
+        }
+      }
+
+      // ★ AI連携用の関数
+      function setupAIInterface() {
+        const btn = document.getElementById('sendButton');
+        const input = document.getElementById('promptInput');
+        const msgDisplay = document.getElementById('aiMessage');
+
+        btn.addEventListener('click', async () => {
+          const text = input.value;
+          if (!text) return;
+
+          btn.disabled = true;
+          btn.textContent = 'AI思考中...';
+
+          try {
+            // 1. サーバーに送信
+            const response = await fetch('http://localhost:3000/api/gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: text }),
+            });
+
+            // 2. 結果を受け取る
+            const data = await response.json();
+            const result = data.result;
+
+            // 3. パラメータを更新
+            gameParams.gravity = result.gravity;
+            gameParams.enemySpeed = result.enemySpeed;
+            gameParams.jumpForce = result.jumpForce;
+
+            // 4. p5playの世界に即座に反映
+            world.gravity.y = gameParams.gravity; // 重力を変更
+
+            isGameStarted = true;
+
+            // 既に画面にいる敵の速度も更新してあげる
+            for (let enemy of enemies) {
+              enemy.vel.x = -gameParams.enemySpeed;
+            }
+
+            // メッセージ表示
+            msgDisplay.textContent = `AI: 「${result.message}」`;
+            console.log('設定更新:', result);
+          } catch (e) {
+            console.error(e);
+            msgDisplay.textContent = 'エラーが発生しました';
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '世界を変える';
+          }
+        });
+      }
     </script>
   </body>
 </html>

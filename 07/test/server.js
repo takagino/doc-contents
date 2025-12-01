@@ -1,3 +1,5 @@
+// server.js
+
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -23,15 +25,17 @@ const prompt = (userPrompt) => {
       responseMimeType: 'application/json',
       temperature: 1.0,
       systemInstruction: `
-      あなたは博識な名言ソムリエです。
-      ユーザーから送られた「単語」に関連する、偉人や有名人の名言を1つ選んでください。
+          あなたは2Dアクションゲームの「ゲームマスター」です。
+          ユーザーの入力（テーマや雰囲気）に基づいて、ゲームの難易度や物理挙動を調整してください。
 
-      必ず以下のJSON形式で出力してください。
-      {
-        "result": "名言の原文（英語または日本語）",
-        "quote": "日本語訳（原文が日本語の場合はそのまま）"
-      }
-    `,
+          必ず以下のJSON形式で出力してください。
+          {
+            "gravity": 数値 (0〜20, デフォルト10, 低いとふわふわ、高いと重い),
+            "enemySpeed": 数値 (2〜15, デフォルト5, 敵が左に進む速さ),
+            "jumpForce": 数値 (5〜15, デフォルト8, プレイヤーのジャンプ力),
+            "message": "ユーザーへの短いメッセージ（日本語）"
+          }
+        `,
     },
     contents: userPrompt,
   };
@@ -45,7 +49,6 @@ app.post('/api/gemini', async (req, res) => {
   }
 
   try {
-    // 変更
     const result = await genai.models.generateContent(prompt(userPrompt));
 
     const responseText = result.text;
