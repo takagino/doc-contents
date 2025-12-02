@@ -16,10 +16,7 @@
       />
       <button id="sendButton">世界を変える</button>
     </div>
-    <div
-      id="aiMessage"
-      style="margin-bottom: 10px; font-weight: bold; color: blue"
-    ></div>
+    <div id="aiMessage"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
@@ -149,8 +146,6 @@
             // 4. p5playの世界に即座に反映
             world.gravity.y = gameParams.gravity; // 重力を変更
 
-            isGameStarted = true;
-
             // 既に画面にいる敵の速度も更新してあげる
             for (let enemy of enemies) {
               enemy.vel.x = -gameParams.enemySpeed;
@@ -158,6 +153,10 @@
 
             // メッセージ表示
             msgDisplay.textContent = `AI: 「${result.message}」`;
+
+            // ゲーム開始フラグを立てる
+            isGameStarted = true;
+
             console.log('設定更新:', result);
           } catch (e) {
             console.error(e);
