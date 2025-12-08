@@ -1,48 +1,67 @@
+<!-- index.html -->
+
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI名言ジェネレーター</title>
-</head>
-<body>
-  <h1>架空のデビュー曲ジェネレーター</h1>
-  <p>架空のバンド名を入力してください。</p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI名言ジェネレーター</title>
+  </head>
+  <body>
+    <h1>AI名言ジェネレーター</h1>
+    <p>好きな単語を入力してください（例：勇気、失敗、猫）</p>
 
-  <input type="text" id="wordInput" placeholder="バンド名を入力" />
-  <button id="sendButton">生成する</button>
-  <p><strong id="quoteResult">---</strong></p>
+    <input type="text" id="wordInput" placeholder="単語を入力" />
+    <button id="sendButton">名言を探す</button>
+    <p><strong id="quoteResult">---</strong></p>
 
-  <script>
-    const btn = document.getElementById('sendButton');
-    const input = document.getElementById('wordInput');
-    const quoteResult = document.getElementById('quoteResult');
+    <script>
+      const btn = document.getElementById('sendButton');
+      const input = document.getElementById('wordInput');
+      const quoteResult = document.getElementById('quoteResult');
 
-    btn.addEventListener('click', async () => {
-      const word = input.value;
-      if (!word) return;
+      const instruction = `
+        あなたは博識な名言ソムリエです。
+        ユーザーから送られた「単語」に関連する、偉人や有名人の名言を1つ選んでください。
 
-      btn.disabled = true;
-      btn.textContent = '検索中...';
+        必ず以下のJSON形式で出力してください。
+        {
+          "result": "名言の原文（英語または日本語）",
+          "quote": "日本語訳（原文が日本語の場合はそのまま）"
+        }
+      `;
 
-      try {
-        const response = await fetch('http://localhost:3000/api/gemini', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: word })
-        });
+      btn.addEventListener('click', async () => {
+        // 入力された単語を取得
+        const word = input.value;
 
-        const data = await response.json();
+        // 入力チェック
+        if (!word) return;
 
-        quoteResult.textContent = data.result.quote;
-        btn.disabled = false;
-        btn.textContent = '生成する';
-      } catch (error) {
-        console.log("通信エラー:", error);
-        btn.disabled = false;
-        btn.textContent = '生成する';
-      }
-    });
-  </script>
-</body>
+        // ボタンを無効化して状態を表示
+        btn.disabled = true;
+        btn.textContent = '検索中...';
+
+        try {
+          // サーバーにPOSTリクエストを送信
+          const response = await fetch('http://localhost:3000/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: word, instruction: instruction }),
+          });
+
+          // レスポンスをJSONとして取得
+          const data = await response.json();
+
+          // 結果を表示
+          quoteResult.textContent = data.result.quote;
+          btn.disabled = false;
+          btn.textContent = '名言を探す';
+        } catch (error) {
+          console.error('通信エラー:', error);
+          btn.disabled = false;
+          btn.textContent = '名言を探す';
+        }
+      });
+    </script>
+  </body>
 </html>

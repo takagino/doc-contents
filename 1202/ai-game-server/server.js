@@ -18,22 +18,13 @@ app.listen(port, () => {
 });
 
 // プロンプトを作成する関数
-const prompt = (userPrompt) => {
+const prompt = (userPrompt, userInstruction) => {
   return {
     model: 'gemini-2.5-flash-lite',
     config: {
       responseMimeType: 'application/json',
       temperature: 1.0,
-      systemInstruction: `
-      あなたは博識な名言ソムリエです。
-      ユーザーから送られた「単語」に関連する、偉人や有名人の名言を1つ選んでください。
-
-      必ず以下のJSON形式で出力してください。
-      {
-        "result": "名言の原文（英語または日本語）",
-        "quote": "日本語訳（原文が日本語の場合はそのまま）"
-      }
-    `,
+      systemInstruction: userInstruction,
     },
     contents: userPrompt,
   };
@@ -41,6 +32,8 @@ const prompt = (userPrompt) => {
 
 app.post('/api/gemini', async (req, res) => {
   const userPrompt = req.body.prompt;
+  const userInstruction =
+    req.body.instruction || 'あなたは親切なアシスタントです。';
 
   if (!userPrompt) {
     return res.status(400).json({ error: '単語を入力してください' });
@@ -48,7 +41,9 @@ app.post('/api/gemini', async (req, res) => {
 
   try {
     // 変更
-    const result = await genai.models.generateContent(prompt(userPrompt));
+    const result = await genai.models.generateContent(
+      prompt(userPrompt, userInstruction)
+    );
 
     const responseText = result.text;
     console.log('AIの応答:', responseText);
