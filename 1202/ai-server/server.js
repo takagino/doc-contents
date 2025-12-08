@@ -53,7 +53,7 @@ app.post('/api/gemini', async (req, res) => {
     req.body.instruction || 'あなたは親切なアシスタントです。';
 
   if (!userPrompt) {
-    return res.status(400).json({ error: '単語を入力してください' });
+    return res.status(400).json({ error: '入力してください' });
   }
 
   try {

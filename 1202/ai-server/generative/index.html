@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generative AI Art</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <style>
+      body {
+        margin: 1em 2em;
+      }
+      #ui {
+        margin-bottom: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <input
+        type="text"
+        id="promptInput"
+        placeholder="例: 激しい怒り、静かな海"
+      />
+      <button id="sendButton">生成</button>
+      <div id="aiMessage">AI：</div>
+    </div>
+
+    <script>
+      const url = 'http://160.251.173.137:3000/api/gemini';
+      // ローカル：http://localhost:3000/api/gemini
+      // リモート：http://160.251.173.137:3000/api/gemini
+
+      // --- AIへの指示文 ---
+      const instruction = `
+        あなたはジェネラティブアートの配色家です。
+        ユーザーの言葉から連想される「オブジェクトの色」「背景色」「オブジェクトの大きさ」「動きの速さ」を決定してください。
+
+        必ず以下のJSON形式で出力してください。
+        {
+          "colorPalette": ["#16進数カラー1", "#16進数カラー2", "#16進数カラー3"],
+          "backgroundColor": "#16進数カラー（#RRGGBBAA）",
+          "objectSize": 数値 (5 〜 100),
+          "noiseSpeed": 数値 (0.001 〜 0.1),
+          "message": "選んだ理由（一言で）"
+        }
+      `;
+
+      // --- 初期パラメータ ---
+      let params = {
+        colorPalette: ['#FFFFFF', '#888888', '#444444'], // 白黒
+        backgroundColor: '#00000033', // 黒（残像を残す）
+        objectSize: 30,
+        noiseSpeed: 0.01,
+      };
+
+      // 図形ごとのノイズ位置を記憶する配列
+      let offsets = [];
+      const COUNT = 50; // 図形の数は固定
+      let seed = 0;
+
+      function setup() {
+        createCanvas(640, 480);
+        noStroke();
+        colorMode(HSL);
+        rectMode(CENTER);
+
+        // ノイズの初期値をランダムに生成
+        for (let i = 0; i < COUNT; i++) {
+          offsets.push({ x: random(1000), y: random(1000) });
+        }
+
+        seed = random(1000);
+
+        setupAI(); // AI連携の準備
+      }
+
+      function draw() {
+        background(params.backgroundColor);
+        randomSeed(seed); // 毎フレーム同じ乱数列にする
+
+        for (let i = 0; i < COUNT; i++) {
+          // 1. 色をパレットからランダムに取り出す
+          let col =
+            params.colorPalette[floor(random(params.colorPalette.length))];
+          fill(col);
+
+          // 2. ノイズで座標を計算 (0〜1 の値を 画面サイズに変換)
+          let x = noise(offsets[i].x) * width;
+          let y = noise(offsets[i].y) * height;
+
+          // 3. 円を描画
+          circle(x, y, params.objectSize);
+
+          // 4. ノイズを進める (AIが決めたスピードで！)
+          offsets[i].x += params.noiseSpeed;
+          offsets[i].y += params.noiseSpeed;
+        }
+      }
+
+      // --- AI連携部分 ---
+      function setupAI() {
+        const btn = document.getElementById('sendButton');
+        const input = document.getElementById('promptInput');
+        const msg = document.getElementById('aiMessage');
+
+        btn.addEventListener('click', async () => {
+          const text = input.value;
+          if (!text) return;
+
+          btn.disabled = true;
+          btn.textContent = '生成中...';
+
+          try {
+            // サーバーに送信
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: text, instruction: instruction }),
+            });
+
+            const data = await response.json();
+            const result = data.result;
+
+            console.log('AIからの応答:', result);
+
+            // ★ AIから受け取ったパラメータを適用
+            params.colorPalette = result.colorPalette;
+            params.backgroundColor = result.backgroundColor;
+            params.objectSize = result.objectSize;
+            params.noiseSpeed = result.noiseSpeed;
+
+            seed = random(1000);
+            background(params.backgroundColor);
+
+            msg.textContent = `AI：${result.message}`;
+          } catch (e) {
+            console.error(e);
+            msg.textContent = 'エラー';
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '生成';
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
