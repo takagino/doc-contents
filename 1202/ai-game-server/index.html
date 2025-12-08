@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI名言ジェネレーター</title>
+</head>
+<body>
+  <h1>架空のデビュー曲ジェネレーター</h1>
+  <p>架空のバンド名を入力してください。</p>
+
+  <input type="text" id="wordInput" placeholder="バンド名を入力" />
+  <button id="sendButton">生成する</button>
+  <p><strong id="quoteResult">---</strong></p>
+
+  <script>
+    const btn = document.getElementById('sendButton');
+    const input = document.getElementById('wordInput');
+    const quoteResult = document.getElementById('quoteResult');
+
+    btn.addEventListener('click', async () => {
+      const word = input.value;
+      if (!word) return;
+
+      btn.disabled = true;
+      btn.textContent = '検索中...';
+
+      try {
+        const response = await fetch('http://localhost:3000/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: word })
+        });
+
+        const data = await response.json();
+
+        quoteResult.textContent = data.result.quote;
+        btn.disabled = false;
+        btn.textContent = '生成する';
+      } catch (error) {
+        console.log("通信エラー:", error);
+        btn.disabled = false;
+        btn.textContent = '生成する';
+      }
+    });
+  </script>
+</body>
+</html>
