@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Generative AI Art</title>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.js"></script>
     <style>
       body {
         margin: 1em 2em;
@@ -27,18 +27,18 @@
 
       // --- AIへの指示文 ---
       const instruction = `
-        あなたはジェネラティブアートの配色家です。
-        ユーザーの言葉から連想される「オブジェクトの色」「背景色」「オブジェクトの大きさ」「動きの速さ」を決定してください。
+              あなたはジェネラティブアートの配色家です。
+              ユーザーの言葉から連想される「オブジェクトの色」「背景色」「オブジェクトの大きさ」「動きの速さ」を決定してください。
 
-        必ず以下のJSON形式で出力してください。
-        {
-          "colorPalette": ["#16進数カラー1", "#16進数カラー2", "#16進数カラー3"],
-          "backgroundColor": "#16進数カラー（#RRGGBBAA）",
-          "objectSize": 数値 (5 〜 100),
-          "noiseSpeed": 数値 (0.001 〜 0.1),
-          "message": "選んだ理由（一言で）"
-        }
-      `;
+              必ず以下のJSON形式で出力してください。
+              {
+                "colorPalette": ["#16進数カラー1", "#16進数カラー2", "#16進数カラー3"],
+                "backgroundColor": "#16進数カラー（#RRGGBBAA）",
+                "objectSize": 数値 (5 〜 100),
+                "noiseSpeed": 数値 (0.001 〜 0.1),
+                "message": "選んだ理由（一言で）"
+              }
+            `;
 
       // --- 初期パラメータ ---
       let params = {
@@ -92,7 +92,6 @@
         }
       }
 
-      // --- AI連携部分 ---
       function setupAI() {
         const btn = document.getElementById('sendButton');
         const input = document.getElementById('promptInput');
@@ -106,7 +105,6 @@
           btn.textContent = '生成中...';
 
           try {
-            // サーバーに送信
             const response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -124,13 +122,14 @@
             params.objectSize = result.objectSize;
             params.noiseSpeed = result.noiseSpeed;
 
-            seed = random(1000);
-            background(params.backgroundColor);
+            // 変化を分かりやすくするためのリセット処理
+            seed = random(1000); // 色の配置パターンを変える
+            background(params.backgroundColor); // 背景を一回塗りつぶす
 
+            // 画面にメッセージを表示
             msg.textContent = `AI：${result.message}`;
           } catch (e) {
             console.error(e);
-            msg.textContent = 'エラー';
           } finally {
             btn.disabled = false;
             btn.textContent = '生成';
