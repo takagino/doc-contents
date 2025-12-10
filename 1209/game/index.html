@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generative AI Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.min.js"></script>
+  <!-- planck -->
+  <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
+  <!-- Version 3 of p5.play -->
+  <script src="https://p5play.org/v3/p5play.js"></script>
+  <style>
+    body {
+      margin: 1em 2em;
+    }
+
+    #ui {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <input type="text" id="promptInput" placeholder="例: 伝説の勇者、猫の魔法使い" size="30" />
+    <button id="sendButton">召喚</button>
+    <div id="aiMessage">AI：</div>
+  </div>
+  <script>
+    const instruction = `
+  あなたはレトロゲームのデザイナーです。
+  ユーザーの入力から連想される「キャラクター（8x8ドット絵）」と「ステータス」を決定してください。
+
+  必ず以下のJSON形式で出力してください。
+  {
+    "status": {
+      "speed": 数値 (3〜10),
+      "jumpForce": 数値 (8〜15),
+      "bulletSpeed": 数値 (5〜20),
+      "bulletColor": "弾の色(CSSカラー)",
+      "gravity": 数値 (5〜25),
+      "bgColor": "背景色(CSSカラー)"
+    },
+    // ドット絵のデータ（配列）。空白は "." (ドット) で表現してください。
+    // "x" はメインカラー、"o" はサブカラーとして使います。
+    "artLayout": [
+      "........",
+      "..xxxx..",
+      ".x.oo.x.",
+      ".xxxxxx.",
+      "..xxxx..",
+      "...xx...",
+      "..x..x..",
+      ".x....x."
+    ],
+    // 各文字に対応する色定義
+    "palette": {
+      "x": "メインカラーの16進数コード (#RRGGBB)",
+      "o": "サブカラーの16進数コード (#RRGGBB)"
+    },
+    "message": "一言解説"
+  }
+`;
+
+    let gameParams = {
+      speed: 5,          // プレイヤーの移動速度
+      jumpForce: 10,     // ジャンプ力
+      bulletSpeed: 10,   // 弾の速さ
+      bulletColor: '#ffff00', // 弾の色
+      gravity: 15,       // 世界の重力
+      bgColor: '#222222' // 背景色
+    };
+
+    let player, floor, enemies, bullets;
+    let isGameStarted = false;
+    let isGameOver = false;
+    let score = 0;
+
+    function setup() {
+      new Canvas(640, 480);
+      world.gravity.y = gameParams.gravity;
+
+      // --- 床 ---
+      floor = new Sprite(320, 450, 640, 60, 'static');
+      floor.color = '#444';
+
+      // --- プレイヤー ---
+      player = new Sprite(100, 350, 40, 40);
+      player.color = 'cyan'; // 最初はただの四角
+      player.rotationLock = true; // 転倒防止
+
+      // --- 敵グループ ---
+      enemies = new Group();
+      enemies.w = 30;
+      enemies.h = 30;
+      enemies.color = 'red';
+      enemies.collider = 'kinematic'; // 重力無視で直進
+
+      // --- 弾グループ ---
+      bullets = new Group();
+      bullets.w = 10;
+      bullets.h = 5;
+      bullets.life = 60; // 1秒で消滅
+
+      setupAI();
+    }
+
+    function draw() {
+      background(gameParams.bgColor);
+
+      // すぐにゲームを開始させない
+      if (!isGameStarted) {
+        fill(255);
+        textSize(30);
+        textAlign(CENTER);
+        text('キャラクターを召喚してスタート', width / 2, height / 2);
+        return;
+      }
+
+      if (isGameOver) {
+        textSize(50);
+        textAlign(CENTER);
+        fill('white');
+        text("GAME OVER", width / 2, height / 2);
+        return;
+      }
+
+      // --- プレイヤー操作 ---
+      if (kb.pressing('left')) player.vel.x = -gameParams.speed;
+      else if (kb.pressing('right')) player.vel.x = gameParams.speed;
+      else player.vel.x = 0;
+
+      // ジャンプ
+      if (kb.presses('up') && player.colliding(floor)) {
+        player.vel.y = -gameParams.jumpForce;
+      }
+
+      // 発射
+      if (kb.presses('space')) {
+        let b = new bullets.Sprite(player.x, player.y);
+        b.vel.x = gameParams.bulletSpeed;
+        b.color = gameParams.bulletColor;
+      }
+
+      // --- 敵の出現 ---
+      if (frameCount % 60 === 0) {
+        let e = new enemies.Sprite(width, 380);
+        e.vel.x = -5; // 敵の速さは固定（ここもAIに変えさせても面白い）
+      }
+      enemies.cull(100); // 画面外削除
+
+      // --- 衝突判定 ---
+      // 弾と敵
+      bullets.collides(enemies, (b, e) => {
+        b.remove();
+        e.remove();
+        score++;
+      });
+
+      // プレイヤーと敵
+      if (player.collides(enemies)) {
+        player.remove();
+        isGameOver = true;
+      }
+
+      // スコア表示
+      fill(255);
+      textSize(20);
+      textAlign(LEFT);
+      text(`Score: ${score}`, 20, 30);
+    }
+
+    // 以下、追加
+    const url = 'http://localhost:3000/api/gemini';
+
+    function setupAI() {
+      const btn = document.getElementById('sendButton');
+      const input = document.getElementById('promptInput');
+      const msg = document.getElementById('aiMessage');
+
+      btn.addEventListener('click', async () => {
+        const text = input.value;
+        if (!text) return;
+
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+
+        try {
+          // サーバーに送信
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: text, instruction: instruction }),
+          });
+
+          const data = await response.json();
+          const result = data.result;
+
+          console.log('AIからの応答:', result);
+
+          gameParams = result.status;
+
+          const charImg = spriteArt(result.artLayout, 5, result.palette);
+
+          player.remove(); // 古いキャラを消す
+          player = new Sprite(100, 350);
+          player.image = charImg; // ★生成した画像をセット！
+          player.rotationLock = true;
+          player.x = 100;
+          player.y = 350;
+
+          // ゲームのリセット
+          score = 0;
+          isGameOver = false;
+          enemies.removeAll();
+          bullets.removeAll();
+
+          // メッセージ表示
+          msg.textContent = `AI：${result.message}`;
+
+          // ★ 重力を適用してゲーム開始！
+          world.gravity.y = gameParams.gravity;
+          isGameStarted = true;
+
+        } catch (e) {
+          console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '召喚';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

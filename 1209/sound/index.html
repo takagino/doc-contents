@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generative AI Sound</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/addons/p5.sound.js"></script>
+  <style>
+    body {
+      margin: 1em 2em;
+    }
+
+    #ui {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <input type="text" id="promptInput" placeholder="例: 悲しい雨、勝利のファンファーレ" size="30" />
+    <button id="sendButton">生成</button>
+    <div id="aiMessage">AI：</div>
+  </div>
+  <script>
+    const instruction = `
+  あなたは天才作曲家です。
+  ユーザーの言葉から連想される「音階」「テンポ」「音の雰囲気」を決定してください。
+
+  必ず以下のJSON形式で出力してください。
+  {
+    "notes": ["音階1", "音階2", "音階3", ... (英語表記: C4, D#4, F5など。5〜8音程度)],
+    "interval": 数値 (0.1 〜 1.0, 音を鳴らす間隔・秒),
+    "attack": 数値 (0.01 〜 1.0, 0.01は鋭い音、1.0は柔らかい音),
+    "release": 数値 (0.1 〜 2.0, 音の余韻の長さ),
+    "message": "選んだ理由（一言で）"
+  }
+
+  ヒント:
+  - 「悲しい」ならマイナースケール（C4, Eb4, G4...）、遅いテンポ
+  - 「激しい」なら不協和音や広い音域、速いテンポ、鋭いAttack
+  - 「ファミコン」なら単純な音階、短いRelease
+`;
+
+    // --- 初期パラメータ ---
+    let params = {
+      notes: ['C4', 'E4', 'G4', 'C5', 'G4'], // 使える音のリスト（ドミソソ...）
+      interval: 0.5, // 音を鳴らす間隔（秒）小さいほど速い
+      attack: 0.01, // 音の鋭さ（Attack）：0に近いほど鋭く（ピアノ）、大きいほどふわっと（バイオリン）
+      release: 0.5 // 音の余韻（Release）：大きいほど響く
+    };
+
+    let synth; // シンセサイザー
+    let loopTask; // ループ処理の管理用
+
+    function setup() {
+      createCanvas(400, 200);
+      background(220);
+      textAlign(CENTER, CENTER);
+      text("Click to Start", width / 2, height / 2);
+
+      // シンセサイザーの初期化
+      synth = new p5.PolySynth();
+
+      setupAI();
+    }
+
+    function draw() { }
+
+    function startPlaying() {
+      // ブラウザの音声再生制限を解除
+      userStartAudio();
+
+      // 既存のループがあれば止める
+      if (loopTask) clearInterval(loopTask);
+
+      // 指定した間隔（interval）で音を鳴らすループを開始
+      loopTask = setInterval(playNote, params.interval * 1000);
+    }
+
+    // 1音鳴らす関数
+    function playNote() {
+      // 1. パレット(notes)からランダムに1音選ぶ
+      let note = random(params.notes);
+
+      // 2. 音のエンベロープ（形）を設定
+      // setADSR(attack, decay, sustain, release)
+      synth.setADSR(params.attack, 0.1, 0.5, params.release);
+
+      // 3. 音を鳴らす
+      // play(note, velocity, secondsFromNow, sustainTime)
+      synth.play(note, 0.5, 0, 0.1);
+    }
+
+    // クリックで演奏開始（ブラウザ対策）
+    function mousePressed() {
+      startPlaying();
+    }
+
+    const url = 'http://localhost:3000/api/gemini';
+
+    function setupAI() {
+      const btn = document.getElementById('sendButton');
+      const input = document.getElementById('promptInput');
+      const msg = document.getElementById('aiMessage');
+
+      btn.addEventListener('click', async () => {
+        const inputText = input.value;
+        if (!inputText) return;
+
+        btn.disabled = true;
+        btn.textContent = '作曲中...';
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: inputText, instruction: instruction }),
+          });
+
+          const data = await response.json();
+          const result = data.result;
+
+          console.log('AIからの応答:', result);
+
+          // ★ AIから受け取ったパラメータを適用
+          params.notes = result.notes;
+          params.interval = result.interval;
+          params.attack = result.attack;
+          params.release = result.release;
+
+          // メッセージ表示
+          msg.textContent = `AI：${result.message}`;
+
+          // ★ 新しい設定で演奏を再スタート
+          startPlaying();
+
+          // 視覚的にも変化を（背景色をランダムに変えるなど）
+          background(random(255), random(255), random(255));
+          text(`Playing: ${inputText}`, width / 2, height / 2);
+
+        } catch (e) {
+          console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '生成';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

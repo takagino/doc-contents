@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generative AI Art</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js"></script>
+  <style>
+    body {
+      margin: 1em 2em;
+    }
+
+    #ui {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <input type="text" id="promptInput" placeholder="例: 炎、川、虫など" />
+    <button id="sendButton">生成</button>
+    <div id="aiMessage">AI：</div>
+  </div>
+  <script>
+    // --- AIへの指示文 ---
+    const instruction = `
+  あなたはジェネラティブアートの配色家です。
+  ユーザーの言葉から連想される「オブジェクトの色」「背景色」「オブジェクトの大きさ」「動きの速さ」を決定してください。
+
+  必ず以下のJSON形式で出力してください。
+  {
+    "colorPalette": ["#16進数カラー1", "#16進数カラー2", "#16進数カラー3"],
+    "backgroundColor": "#16進数カラー（#RRGGBBAA）",
+    "objectSize": 数値 (5 〜 100),
+    "noiseSpeed": 数値 (0.001 〜 0.1),
+    "message": "選んだ理由（一言で）"
+  }
+`;
+
+    let params = {
+      colorPalette: ['#FFFFFF', '#888888', '#444444'],
+      backgroundColor: '#00000033',
+      objectSize: 30,
+      noiseSpeed: 0.01,
+    }
+
+    let offsets = [];
+    const COUNT = 50;
+    let seed = 0;
+
+    function setup() {
+      createCanvas(640, 480);
+      noStroke();
+      colorMode(HSL);
+      rectMode(CENTER);
+
+      for (let i = 0; i < COUNT; i++) {
+        offsets.push({ x: random(1000), y: random(1000) });
+      }
+
+      seed = random(1000);
+
+      setupAI();
+    }
+
+    function draw() {
+      background(params.backgroundColor);
+      randomSeed(seed);
+
+      for (let i = 0; i < COUNT; i++) {
+        let col = params.colorPalette[floor(random(params.colorPalette.length))];
+        fill(col);
+
+        let x = noise(offsets[i].x) * width;
+        let y = noise(offsets[i].y) * height;
+
+        circle(x, y, params.objectSize);
+
+        offsets[i].x += params.noiseSpeed;
+        offsets[i].y += params.noiseSpeed;
+      }
+    }
+
+    const url = 'http://localhost:3000/api/gemini';
+
+    function setupAI() {
+      const btn = document.getElementById('sendButton');
+      const input = document.getElementById('promptInput');
+      const msg = document.getElementById('aiMessage');
+
+      btn.addEventListener('click', async () => {
+        const text = input.value;
+        if (!text) return;
+
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body: JSON.stringify({ prompt: text, instruction: instruction })
+          });
+
+          const data = await response.json();
+          const result = data.result;
+
+          console.log('AIからの応答：', result);
+
+          params.colorPalette = result.colorPalette;
+          params.backgroundColor = result.backgroundColor;
+          params.objectSize = result.objectSize;
+          params.noiseSpeed = result.noiseSpeed;
+
+          seed = random(1000);
+          background(params.backgroundColor);
+          msg.textContent = `AI：${result.message}`;
+
+        } catch (e) {
+          console.log(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '生成';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

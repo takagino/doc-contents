@@ -203,12 +203,12 @@
             const data = await response.json();
             const result = data.result;
 
-            // ★ コンソールで確認！
             console.log('AIからの応答:', result);
 
+            // 取得した値を適応
             gameParams = result.status;
 
-            // 2. ドット絵の生成と適用
+            // ドット絵の生成と適用
             const charImg = spriteArt(result.artLayout, 5, result.palette);
 
             // プレイヤーを再生成（または画像を差し替え）
@@ -226,8 +226,7 @@
             bullets.removeAll();
 
             // メッセージ表示
-            const msg = document.getElementById('aiMessage');
-            msg.textContent = `召喚: ${result.message}`;
+            msg.textContent = `AI：${result.message}`;
 
             // ★ 重力を適用してゲーム開始！
             world.gravity.y = gameParams.gravity;
